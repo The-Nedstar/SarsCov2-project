@@ -1,0 +1,508 @@
+---
+title: "Computing Skills HT 2025: measuring growth rate and reproduction number for SARS-CoV-2 variants"
+author: "Mahan Ghafari (mahan.ghafari@ndm.ox.ac.uk)"
+date: "2025-01-22"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Emerging pathogens like SARS-CoV-2 often undergo significant shifts in fitness as they adapt to human hosts, leading to differences in their spread and public health impact. For instance, variants such as Alpha, Delta, and Omicron exhibited differing growth rates and transmissibility, shaping the trajectory of the pandemic. Quantifying these changes helps us understand variant dynamics and prepare for future waves.
+
+This practical introduces the concepts of fitness (selection coefficient), growth rate, and reproduction number (Rₜ)—three key metrics for studying pathogen evolutionary dynamics. Using R, you will analyse real-world data from the UK, exploring how these metrics are calculated and their implications for public health.
+
+By the end of this session, you will:
+
+	•	Understand the differences between fitness advantage and reproduction number of variants.
+
+	•	Learn to estimate these metrics using genomics data.
+	
+	•	Reflect on how changes in these metrics influence epidemic outcomes and control strategies.
+	
+
+We will use SARS-CoV-2 genomic sequence data from the UK, collected through the ONS Covid Infection Survey (ONS-CIS) and COVID-19 Genomics UK Consortium (COG-UK).
+
+## Exploring the ONS-CIS data
+
+Let’s begin by exploring how the SARS-CoV-2 epidemic unfolded in the UK using [data from the ONS-CIS](https://royalsocietypublishing.org/doi/10.1098/rspb.2023.1284). The ONS-CIS (Office for National Statistics COVID-19 Infection Survey) is a household-based surveillance study conducted across a representative sample of UK households. Sampling was carried out continuously over three years, with most participants undergoing RT-PCR testing approximately once a month. Virus samples with high viral loads (Ct < 30) were sequenced to identify the circulating SARS-CoV-2 variants.
+
+To simplify the long list of lineage names assigned by the Pango nomenclature, we group them into broader ‘major lineages.’ For this practical, we focus on variants that caused significant waves in the UK since late 2020. These include: Alpha (B.1.1.7), Delta (B.1.617.2), and various Omicron sublineages, including BA.1, BA.2, BA.4, BA.5, and XBB. We put variants from other lineage into the 'Other' category.
+
+Now, let’s import the ONS-CIS data and begin our analysis.
+
+```{r load-data, message=FALSE, warning=FALSE}
+# Import ONS-CIS daily genomic sequence data
+url <- "https://raw.githubusercontent.com/mg878/variant_fitness_practical/main/lineage_data.csv"
+lineage_data <- read.csv(url)
+# Ensure collection_date is in Date format
+lineage_data$collection_date <- as.Date(lineage_data$collection_date)
+# Check the input format and display the first few rows of the data
+head(lineage_data)
+```
+
+To track changes in the frequencies of major SARS-CoV-2 lineages over time, let's create a new data frame `colnames(lineage_summary) <- c("collection_date", "major_lineage", "lineage_count", "total_counts", lineage_frequency` for daily counts and frequencies of major lineages over time.
+
+```{r get-frequencies, message=FALSE, warning=FALSE}
+lineage_summary <- aggregate(
+  lineage_data$major_lineage,
+  by = list(collection_date = lineage_data$collection_date, major_lineage = lineage_data$major_lineage),
+  FUN = length
+)
+
+# Rename columns for clarity
+colnames(lineage_summary) <- c("collection_date", "major_lineage", "lineage_count")
+
+# Calculate total counts per date
+total_counts <- aggregate(lineage_summary$lineage_count, by = list(collection_date = lineage_summary$collection_date), FUN = sum)
+colnames(total_counts) <- c("collection_date", "total_count")
+
+# Merge total counts back into the lineage summary
+lineage_summary <- merge(lineage_summary, total_counts, by = "collection_date")
+
+# Calculate frequencies
+lineage_summary$lineage_frequency <- lineage_summary$lineage_count / lineage_summary$total_count
+
+# Display the first few rows of the new data frame
+head(lineage_summary)
+```
+
+Plot the daily proportion of B.1.1.7 and B.1.617.2 lineages over time (use `ggplot2` library).
+
+```{r plot-daily-trajectories, echo=TRUE, message=FALSE, warning=FALSE}
+library(ggplot2)
+# Filter data for B.1.1.7 and B.1.617.2
+daily_trajectories <- subset(
+  lineage_summary,
+  major_lineage %in% c("B.1.1.7", "B.1.617.2")
+)
+
+# Plot daily trajectories with points and lines
+ggplot(daily_trajectories, aes(x = collection_date, y = lineage_frequency, color = major_lineage, group = major_lineage)) +
+  geom_line(linewidth = 1) +  # Connect the points with lines
+  geom_point(size = 2, alpha = 0.7) +  # Add points for daily frequencies
+  scale_color_manual(
+    values = c("B.1.1.7" = "blue", "B.1.617.2" = "orange"),
+    labels = c("B.1.1.7 (Alpha)", "B.1.617.2 (Delta)")
+  ) +
+  labs(
+    title = "Daily frequency trajectories of B.1.1.7 and B.1.617.2",
+    x = "Collection date",
+    y = "Proportion",
+    color = "Major lineage"
+  ) +
+  theme_minimal()
+```
+
+Here we can see the stacked lineage proportions of all major over time.
+
+```{r plot-daily-frequencies-stacked, message=FALSE, warning=FALSE}
+# Define a custom color palette for the major SARS-CoV-2 lineages
+custom_palette <- c(
+  "B.1.1.7" = "#1f77b4", # Blue
+  "B.1.617.2" = "#ff7f0e", # Orange
+  "BA.1" = "#2ca02c",  # Green
+  "BA.2" = "#d62728",  # Red
+  "BA.2.75" = "#008B8B",  # Teal
+  "BA.4" = "#9467bd",  # Purple
+  "BA.5" = "#8c564b",  # Brown
+  "BQ.1" = "#e377c2",  # Pink
+  "XBB" = "#D2B48C",  # Light brown
+  "Other" = "#7f7f7f"  # Gray
+)
+
+# Plot the daily frequencies
+ggplot(lineage_summary, aes(x = collection_date, y = lineage_frequency, fill = major_lineage)) +
+    geom_area(position = "fill") +  # Create a stacked area plot
+    scale_fill_manual(values = custom_palette) +  # Apply the custom palette
+    labs(
+      title = "Frequency of major lineages over time",
+      x = "Collection date",
+      y = "Proportion",
+      fill = "Major lineage"
+    ) +
+    theme_minimal()
+```
+
+As you can see. plotting daily frequencies can often lead to very noisy and cluttered visualisations (largely an artefact of the daily sampling frequency and intensity). To make the trends in the frequencies of major lineages easier to interpret, we can group the data into **10-day bins**. This helps reducing noise in the data while still capturing meaningful patterns in the relative proportions of the lineages over time.
+
+```{r create-10-day-binned-data, echo=TRUE, message=FALSE, warning=FALSE}
+# Aggregate lineage frequencies into 10-day bins
+# Converts the Date values into numeric format, where each date is represented as the number of days since 1970-01-01 (the Unix epoch)
+lineage_summary$collection_date_bin <- as.Date(
+  floor(as.numeric(as.Date(lineage_summary$collection_date)) / 10) * 10, origin = "1970-01-01"
+)
+
+# Aggregate lineage counts for each 10-day bin
+lineage_summary_binned <- aggregate(
+  lineage_count ~ collection_date_bin + major_lineage,
+  data = lineage_summary,
+  FUN = sum
+)
+
+# Calculate total counts within each bin
+total_counts <- aggregate(
+  lineage_count ~ collection_date_bin,
+  data = lineage_summary_binned,
+  FUN = sum
+)
+colnames(total_counts) <- c("collection_date_bin", "total_count")  # Rename for clarity
+
+# Merge total counts back into the binned data
+lineage_summary_binned <- merge(lineage_summary_binned, total_counts, by = "collection_date_bin")
+
+# Recalculate frequencies
+lineage_summary_binned$lineage_frequency <- lineage_summary_binned$lineage_count / lineage_summary_binned$total_count
+
+# Preview the binned data
+head(lineage_summary_binned)
+```
+Now that we have created the `lineage_summary_binned` data frame, we can proceed to visualise the frequencies of major lineages over time. This plot shows the smoothed proportions of each major lineage in the population, aggregated into 10-day intervals.
+
+```{r plot-daily-frequencies, message=FALSE, warning=FALSE}
+# Plot the daily frequencies
+ggplot(lineage_summary_binned, aes(x = collection_date_bin, y = lineage_frequency, fill = major_lineage)) +
+    geom_area(position = "fill") +  # Create a stacked area plot
+    scale_fill_manual(values = custom_palette) +  # Apply the custom palette
+    labs(
+      title = "Frequency of major lineages over time",
+      x = "Collection date",
+      y = "Proportion",
+      fill = "Major lineage"
+    ) +
+    theme_minimal()
+```
+
+## Measuring the growth rate of a variant with a fitness advantage
+
+The rate at which a variant with a fitness advantage spreads within a population is a fundamental question in population genetics theory. Considering a population of constant size with two variants, \(V_1\) and \(V_2\), where the generation time (time it takes for one person to infect another) is also constant. Variant \(V_2\) has a reproductive advantage over \(V_1\), producing more offspring by a factor of \(1 + s\), where \(s\) is the **selection coefficient**.
+
+The selection coefficient \(s\) quantifies the fitness advantage of one variant over another:
+
+- If \(s > 0\), variant \(V_2\) has a fitness advantage and increases in frequency.
+
+- If \(s = 0\), both variants are equally fit, and their frequencies remain constant over time.
+
+- If \(s < 0\), variant \(V_2\) has a disadvantage and decreases in frequency.
+
+The deterministic logistic growth model predicts that the frequency \(f(t)\) of an advantageous variant follows this equation:
+
+\[
+f(t) = \frac{f(0) e^{st}}{1 + f(0) \left( e^{st} - 1 \right)}
+\]
+
+where:
+
+- \(s\) is the selection coefficient.
+
+- \(f(t)\) is the frequency of the advantageous variant at time \(t\),
+
+- \(f(0)\) is the initial frequency of the variant with the advantage \(f(0) = \frac{1}{N}\) if there was a single introduction of the variant into a constant population size of \(N\)).
+
+
+To visualise the process, play with the parameters of the model and see how they impact the time to fixation \(f(t^*)=1\):
+
+```{r plot-logistic-growth, echo=TRUE, message=FALSE, warning=FALSE}
+# Define parameters
+N <- 1e4          # Population size
+s <- 0.1          # Selection coefficient
+f0 <- 1 / N       # Initial frequency of the variant
+tmax <- 200       # Maximum number of generations
+t <- seq(0, tmax, by = 1) # Time in generations 
+
+# Logistic growth equation
+logistic_growth <- function(t, s, f0) {
+  (f0 * exp(s * t)) / (1 + f0 * (exp(s * t) - 1))
+}
+
+# Calculate frequencies over time
+frequencies <- logistic_growth(t, s, f0)
+
+# Plot the results
+data <- data.frame(t = t, frequency = frequencies)
+
+ggplot(data, aes(x = t, y = frequency)) +
+  geom_line(color = "orange", linewidth = 1) +
+  labs(
+    title = "Logistic growth of a variant with a fitness advantage over time",
+    x = "Time (generations)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+This shows you how the selective advantage \(s\) drives the increase in the frequency of a variant with an increased transmissibility and/or immune evasion properties in a host population like humans. Initially, growth is slow due to the low starting frequency (\(f(0) = \frac{1}{N}\)), but as the variant becomes more common, its growth accelerates until it approaches fixation.
+
+### Estimating the growth rate for the Delta (B.1.617.2) variant
+
+Now, let's estimate the growth rate of the Delta (B.1.617.2) major lineage using the ONS-CIS data.
+
+The Delta variant experienced a rapid rise in frequency in the UK before declining due to competition with the Omicron BA.1 variant. To capture its growth rate:
+
+- We need to analyse the frequency of Delta during its **increasing trajectory**.
+
+- Using a logistic growth model, fit a linear model to the log-odds of the frequency over time and estimate \(s\).
+
+The growth rate \(s\) can be estimated as the slope of the log-odds of the variant's frequency over time.
+
+The relationship is given by:
+\[
+\log \left( \frac{f(t)}{1 - f(t)} \right) = s \cdot t + f(0)
+\]
+
+Where:
+
+- \(f(t)\) is the frequency of Delta at time \(t\),
+
+- \(s\) is the growth rate,
+
+- \(f(0)\) is the initial (non-zero) frequency of the variant.
+
+Now, first identify the time interval over which Delta is increasing in frequency until it reaches fixation (use `collection_date_bin`).
+
+```{r estimate-delta-growth-part1, echo=TRUE, message=FALSE, warning=FALSE}
+# Filter data for Delta
+delta_data <- subset(lineage_summary_binned, major_lineage == "B.1.617.2")
+
+ggplot(delta_data, aes(x = collection_date_bin, y = lineage_frequency)) +
+  geom_line(color = "orange", linewidth = 1) +  # Static color assigned outside aes()
+  geom_point(size = 2, alpha = 0.7, color = "orange") +  # Static color for points
+  labs(
+    title = "Daily Frequency Trajectories of B.1.617.2 (Delta)",
+    x = "Collection Date",
+    y = "Proportion"
+  ) +
+  theme_minimal()
+```
+
+Delta started growing in the UK from late April and reached its peak around July 2021.
+Now, let's find the growth rate for Delta using the `logistic_growth` model, discussed earlier. Use `nls(lineage_frequency ~ logistic_growth 'function',  data = delta_growth_phase, start = 'some initial guess')` to find best fit value for \(s\) 
+
+```{r estimate-delta-growth-rate-part2, echo=TRUE, message=FALSE, warning=FALSE}
+# Subset data to only include the increasing trajectory for Delta
+delta_growth_phase <- delta_data[
+  delta_data$collection_date_bin >= as.Date("2021-04-23") & delta_data$collection_date_bin <= as.Date("2021-07-12"),
+]
+
+# Fit the logistic model using nls
+nls_fit <- nls(
+  lineage_frequency ~ logistic_growth(as.numeric(collection_date_bin - min(collection_date_bin)), s, f0),
+  data = delta_growth_phase,
+  start = list(s = 0.1, f0 = min(delta_growth_phase$lineage_frequency))  # Initial guesses
+)
+
+# Extract fitted growth rate
+growth_rate <- coef(nls_fit)["s"]
+
+# Generate a smooth sequence of dates for plotting the logistic curve
+smooth_dates <- seq(min(delta_growth_phase$collection_date_bin),
+                    max(delta_growth_phase$collection_date_bin), by = "1 day")
+
+# Calculate predicted frequencies for smooth (continuous) dates 
+smooth_predictions <- data.frame(
+  collection_date_bin = smooth_dates,
+  predicted_frequency = logistic_growth(as.numeric(smooth_dates - min(delta_growth_phase$collection_date_bin)),
+                                         coef(nls_fit)["s"], coef(nls_fit)["f0"])
+)
+
+# Visualise the actual data points and the smooth logistic fit
+ggplot(delta_growth_phase, aes(x = collection_date_bin)) +
+  geom_point(aes(y = lineage_frequency), color = "black", size = 2, alpha = 0.7) +
+  geom_line(data = smooth_predictions, aes(x = collection_date_bin, y = predicted_frequency), color = "orange", size = 1) +
+  annotate(
+    "text", 
+    x = as.Date("2021-05-15"), 
+    y = 0.8, 
+    label = paste0("s= ", round(growth_rate, 4)), 
+    color = "orange", 
+    size = 5
+  ) +
+  labs(
+    title = "Logistic growth fit for Delta variant frequency",
+    x = "Collection date",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+So, back in 2021 in the UK Delta was replacing Alpha at a rate of `s=0.1345` per day which means it was increasing in its frequency at a rate of about 14% per day relative to Alpha, under the logistic growth framework. In other words, Delta's frequency approximately doubled every \(t=log(2)/s \approx 5\) days,
+
+### Reflection: asssessing the logistic growth model fit
+
+Now that we’ve fitted a logistic growth model to the Delta variant data, let's take a moment to think about the results and the assumptions of the model.
+
+1. **Quality of the model fit**:
+
+   - Does the logistic growth model seem to be an appropriate fit for the frequency trajectory of the Delta variant? 
+   
+The logistic growth model may appear appropriate for the Delta variant during its initial exponential growth phase. The fit aligns well with the observed data in this period, capturing the rapid increase in frequency. The epidemiological context, however, is important here: factors such as superspreading events, geographic heterogeneity, and temporal changes in interventions (e.g., mask mandates, travel bans) complicate the assumption of a uniform logistic trajectory. The data is also inherently noisy. Noise in sequencing data and delays in reporting could affect the quality of the fit. Also important to note that one of the advantages of ONS-CIS dataset over others is the fact that sampling biases are much more limited given that individuals are tested regardless of whether they present symptoms or not and are from a representative sample of the UK population.
+   
+2. **Assumptions of the logistic model**:
+
+   - Are the assumptions behind the deterministic logistic growth model realistic in the context of SARS-CoV-2 transmission and the Delta variant? 
+
+*Constant population size*: Throughout the pandemic, the virus population size rose and fell due to rising immunity from vaccination and prior infections as well as public health interventions like lockdowns and travel restrictions.
+
+*Fixed generation time*: SARS-CoV-2 generation times vary depending on individual behaviour, public health measures and variant-specific characteristics.
+
+*Deterministic dynamics*: Stochastic transmission events within a finite-size population can result in random fluctuations of pathogen variant frequencies (also known as genetic drift).
+
+*Homogeneous population*: Founder effects (loss of genetic diversity when a small subset of a population colonises a new region) may distort any interpretation of growth rate advantage of variants if the underlying data only comes from one geographical region.  
+
+*Constant selective advantage*: As immunity builds in the host population, the selective advantage of variants may diminish.
+
+3. **Improving the model**:
+
+   - What is the highest frequency that BA.4, BQ.1, and BA.2.75 lineages ever reach in the UK? Would you be still be able to use the logistic growth model to estimate their growth rate?
+   
+```{r find-max-frequency, echo=TRUE, message=FALSE, warning=FALSE}
+# Filter data for BA.4 and BA.2.75
+filtered_data <- subset(
+  lineage_summary,
+  major_lineage %in% c("BA.4", "BA.2.75", "BQ.1")
+)
+
+# Find the maximum frequency for each lineage
+max_frequencies <- aggregate(
+  lineage_frequency ~ major_lineage,
+  data = filtered_data,
+  FUN = max
+)
+
+# Display the results
+print(max_frequencies)
+```
+
+The logistic growth model presented in this practical assumes that a single variant ultimately reaches fixation \(f(t)=1\). It cannot, therefore, estimate growth rate of multiple co-circulating variants under dynamic competition like BA.4, BA.2.75, BQ.1, and XBB. 
+
+In such cases, alternative approaches may be more appropriate:
+
+*Generalised multinomial logistic regression*: Models the frequencies of multiple variants simultaneously as proportions of a shared population.
+
+*Mechanistic compartmental models (e.g., SEIR)*: Estimate variant-specific growth rates based on transmission rates, immune escape, and other epidemiological factors.
+
+*Bayesian hierarchical models*: Account for data uncertainty, variant interactions, and time-varying covariates such as immunity levels and public health interventions.
+
+The choice of model depends on:
+
+- Your research question,
+
+- The quality and resolution of your data,
+
+- The assumptions you are willing to make about population dynamics.
+
+For example:
+
+- If interactions between variants are minimal, a **generalised multinomial logistic regression** may suffice.
+
+- If competition between variants is significant, a **mechanistic framework** could provide better insights.
+
+## Measuring time-varying reproduction number of a variant
+
+The reproduction number (\(R_t\)) is a key metric in epidemiology. It represents the average number of secondary infections caused by a single infected individual at a given time \(t\). The value of \(R_t\) can help determine whether an epidemic is growing (\(R_t > 1\)) or declining (\(R_t < 1\)).
+
+In this part of the practical, we will be using the [EpiEstim](https://github.com/mrc-ide/EpiEstim) package. It calculates \(R_t\) based on the incidence (the number of new cases during a specified time period) and serial interval (time from the symptom onset of one individual to the symptom onset of the person they infect). \(R_t\) is estimated by comparing the observed incidence at time \(t\) to the expected number of cases, given the incidence in earlier time intervals and the serial interval distribution.
+
+\[
+R_t = \frac{I(t)}{\sum_{s=1}^{t} I(t-s) \, w(s)}
+\]
+
+where \(I(t)\) is the number of new cases (incidence) at time \(t\) and \(w(s)\) is the probability mass function of the serial interval at lag \(s\). The denominator in the equation above is known as total infectiousness of infected individuals at time \(t\) and is equal to the sum of infection incidence up to time step \(t-1\), weighted by the infectivity function, \(w(s)\). 
+
+
+### Estimating \(R_t\) for the Delta (B.1.617.2) variant
+
+To estimate \(R_t\) for Delta using EpiEstim, we need to provide daily cases of Delta as an input, EpiEstim then performs further smoothing to reduce the effect of sampling noise from the data. We use the daily number of Delta sequences from ONS-CIS as a proxy for incidence (is this a reasonable assumption?).
+
+```{r plot-delta-counts, echo=TRUE, message=FALSE, warning=FALSE}
+# Filter daily counts for Delta directly from lineage_summary*
+delta_daily_counts <- subset(
+  lineage_summary,
+  major_lineage == "B.1.617.2"  # *Filter for Delta variant*
+)
+
+# *Plot the daily counts*
+ggplot(delta_daily_counts, aes(x = collection_date, y = lineage_count)) +
+  geom_bar(stat = "identity", fill = "orange", alpha = 0.7) +
+  labs(
+    title = "Daily Counts of Delta Variant",
+    x = "Collection Date",
+    y = "Daily Count"
+  ) +
+  theme_minimal()
+```
+
+Now, in order to estimate \(R_t\) for Delta, we also need to give the mean and standard deviation of the serial interval as additional input to EpiEstim. For this we use `mean_si = 4.1` days and `std_si = 2.8` days which were estimated for Delta in this [study](https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2022.27.6.2200042).
+
+```{r estimate-delta-rt, echo=TRUE, message=FALSE, warning=FALSE}
+# Load necessary libraries
+# install.packages("MCMCpack")
+# install.packages("EpiEstim")
+library(MCMCpack)
+library(EpiEstim)
+library(incidence)
+
+# Specify start and end dates
+# The input incidence data for EpiEstim cannot include missing dates and case counts 
+start_date <- as.Date("2021-06-01")
+end_date <- as.Date("2021-11-01")
+
+# Filter delta_daily_counts for the specified date range
+filtered_delta_counts <- subset(
+  delta_daily_counts,
+  collection_date >= start_date & collection_date <= end_date
+)
+
+# Prepare data for estimate_R
+incidence_data <- data.frame(
+  dates = filtered_delta_counts$collection_date,
+  I = filtered_delta_counts$lineage_count  # Use lineage_count as daily incidence
+)
+
+# Define serial interval parameters (example values)
+serial_interval <- list(mean_si = 4.1, std_si = 2.8)
+
+# Estimate R_t
+rt_results <- estimate_R(
+  incid = incidence_data,
+  method = "parametric_si",
+  config = make_config(serial_interval)
+)
+
+# Plot the R_t estimates
+plot(rt_results, what = "R", legend = FALSE) +
+  labs(
+    title = expression("Time-varying reproduction number" ~ (R[t]) ~ "for Delta"),
+    x = "Date",
+    y = expression("Reproduction number" ~ (R[t]))
+  )
+```
+
+So, in the early phase of Delta spread, \(R_t \approx 1.85\). 
+
+### Reflection: variant competition during a declining outbreak
+
+**Does our estimated \(R_t\) for Delta match with our expectations from its estimated growth rate?** (hint: use the approximation \( s \approx log(R_t)/T_g\) where \(T_g=4.7\) days is the [generation time of Delta](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(22)00001-9/fulltext); this approximation is only valid during the exponential growth phase of an epidemic)
+
+Answer: Yes, using the above formula, we get \(s\approx 0.13\) which is very similar to what we found earlier for the growth rate of Delta using the logistic growth model.
+
+**Can you imagine a scenario where the total outbreak size is declining but one variant is replacing another one? **
+
+Answer: Yes, the selective advantage (\(s>0\)) allows the variant to grow in **relative** frequency over time even if the absolute size of the infected population is declining (\(R_t<1\)).
+
+**Under such a scenario would you still be able to use the logistic growth model to estimate the growth advantage of a variant? What extra assumptions would you be required to make to be able to apply the logistic growth model in this scenario?**
+
+Answer: Yes, the logistic growth model can approximate (\(s>0\)) if the total virus population size declines *uniformly* across both variants. Also, changes in relative frequency must be primarily driven by selective advantage and not other confounding factors such as immunity, interventions, or founder effects. 
+
+## Acknowledgements and further readings
+
+I would like to thank Erik Volz for providing the COG-UK data used in part of the assignment.
+
+https://www.nature.com/articles/s41576-023-00610-z
+
+https://royalsociety.org/-/media/policy/projects/set-c/set-covid-19-r-estimates.pdf
+
+https://royalsocietypublishing.org/doi/10.1098/rspb.2006.3754
