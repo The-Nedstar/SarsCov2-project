@@ -1,0 +1,15 @@
+---
+title: "Sars Cov2 Project"
+output: html_document
+date: "2025-03-17"
+bibliography: references.bib
+nocite: "@whitlock2020analysis, @nichols, @wickham2023r"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r loading libraries and functions}
+library(tidyverse)
+```
