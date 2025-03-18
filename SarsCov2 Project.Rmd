@@ -17,6 +17,7 @@ rm(list = ls())
 library(tidyverse)
 library(here)
 library(RColorBrewer)
+library(gridExtra)
 
 ## installing self made functions
 source(here("Data", "Functions.R"))
@@ -56,7 +57,7 @@ stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$count,
                   "TotalCountsAP.png")
 ```
 
-![Figure 1:](Figures/TotalCountsAP.png)
+![Fig 1:](Figures/TotalCountsAP.png)
 
 ```{r Proportion graph}
 ## calculation proportion values
@@ -84,54 +85,211 @@ stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$proportion,
 ## 1.
 
 ```{r Loading Data}
+## downloading data
 ONSData <- read.csv("https://raw.githubusercontent.com/mg878/variant_fitness_practical/main/lineage_data.csv")
-# Ensure collection_date is in Date format
 ONSData$collection_date <- as.Date(ONSData$collection_date)
 
-ONSSum <- aggregate(
-  ONSData$major_lineage,
-  by = list(collection_date = ONSData$collection_date, major_lineage = ONSData$major_lineage),
-  FUN = length
-)
-
-# Rename columns for clarity
+## Data wrangling
+# combining values from the same lineage together
+ONSSum <- aggregate(ONSData$major_lineage,
+                    by = list(collection_date = ONSData$collection_date, 
+                              major_lineage = ONSData$major_lineage), FUN = length)
+# changing collumn names
 colnames(ONSSum) <- c("collection_date", "major_lineage", "lineage_count")
-
-# Calculate total counts per date
-total_counts <- aggregate(ONSSum$lineage_count, by = list(collection_date = ONSSum$collection_date), FUN = sum)
-colnames(total_counts) <- c("collection_date", "total_count")
-
-# Merge total counts back into the lineage summary
-ONSSum <- merge(ONSSum, total_counts, by = "collection_date")
-
-# Calculate frequencies
-ONSSum$lineage_frequency <- ONSSum$lineage_count / ONSSum$total_count
-
-ONSSum$collection_date_bin <- as.Date(
-  floor(as.numeric(as.Date(ONSSum$collection_date)) / 10) * 10, origin = "1970-01-01"
-)
-
-# Aggregate lineage counts for each 10-day bin
-ONSSumBin <- aggregate(
-  lineage_count ~ collection_date_bin + major_lineage,
-  data = ONSSum,
-  FUN = sum
-)
-
-# Calculate total counts within each bin
-total_counts <- aggregate(
-  lineage_count ~ collection_date_bin,
-  data = ONSSumBin,
-  FUN = sum
-)
-colnames(total_counts) <- c("collection_date_bin", "total_count")  # Rename for clarity
-
-# Merge total counts back into the binned data
-ONSSumBin <- merge(ONSSumBin, total_counts, by = "collection_date_bin")
-
-# Recalculate frequencies
-ONSSumBin$lineage_frequency <- ONSSumBin$lineage_count / ONSSumBin$total_count
 
 ```
 
+```{r calculations}
+## totals
+# combining all values with the same collection date
+total_counts <- aggregate(ONSSum$lineage_count, 
+                          by = list(collection_date = ONSSum$collection_date), 
+                          FUN = sum)
+# change names to fit the original dataframe
+colnames(total_counts) <- c("collection_date", "total_count")
+# add to the original dataframe
+ONSSum <- merge(ONSSum, total_counts, by = "collection_date")
+
+## calculate frequencies
+ONSSum$lineage_frequency <- ONSSum$lineage_count / ONSSum$total_count
+
+## grouping data into 10s
+# creating a column with dates grouped into 10s 
+ONSSum$collection_date_bin <- as.Date(floor(as.numeric(
+  as.Date(ONSSum$collection_date)) / 10) * 10, 
+  origin = "1970-01-01")
+# creating a new dataframe with each 10 day period summed
+ONSSumBin <- aggregate(lineage_count ~ collection_date_bin + major_lineage, 
+                       data = ONSSum, FUN = sum)
+# Calculate total counts within each bin
+total_counts <- aggregate(lineage_count ~ collection_date_bin,
+                          data = ONSSumBin,FUN = sum)
+#change to fit with original dataframe
+colnames(total_counts) <- c("collection_date_bin", "total_count") 
+# add back to dataset
+ONSSumBin <- merge(ONSSumBin, total_counts, by = "collection_date_bin")
+# Recalculate frequencies
+ONSSumBin$lineage_frequency <- ONSSumBin$lineage_count / ONSSumBin$total_count
+```
+
+```{r}
+## Data wrangling
+# creating dataframe with only BA.2 and only the relevant columns
+ONSBA2 <- subset(ONSSumBin, major_lineage == "BA.2", 
+                 select = c(collection_date_bin, lineage_count))
+# renaming columns for easy combination later
+colnames(ONSBA2) <- c("date", "count")
+# creating a new dataframe with values normalised to match the COG data
+ONSBA2c <- ONSBA2 %>% mutate(count = count * 6.6667)
+# adding a factor column to identify these values as ONS-CIS derived
+ONSBA2c$Data <- as.factor("ONS-CIS")
+  
+# creating dataframe with only BA.2 and only the relevant columns  
+COGBA2 <- subset(GenPerWeek, lineage == "BA.2",
+                 select = c("date", "count"))
+# creating a new dataframe with the same time period as the ONS-CIS data
+COGBA2c <- subset(COGBA2, date > as.Date("2021-12-18"))
+# adding a factor column to identify these values as COG-UK derived
+COGBA2c$Data <- as.factor("COG-UK")
+
+# creating a combined dataset
+Both <- bind_rows(ONSBA2c, COGBA2c)
+
+## Plotting
+# creating a plot for the ONS-CIS data using a self made function
+ONSPlot <- single_lineage_plot(ONSBA2, ONSBA2$date, "time", ONSBA2$count, "count", 
+                               "c) Lineage tragectory for BA.2 (ONS-CIS)")
+# creating a plot for the COG-UK data using a self made function
+COGPlot <- single_lineage_plot(COGBA2, COGBA2$date, "time", COGBA2$count, "count", 
+                               "b) Full Lineage tragectory for BA.2 (COG-UK)")
+# creating a plot for the cropped COG-UK data using a self made function
+COGPlot2 <- single_lineage_plot(COGBA2c, COGBA2c$date, "time", COGBA2c$count,
+                               "count", 
+                               "a) Cropped Lineage tragectory for BA.2 (COG-UK)")
+# creating a plot with both datasets shown together
+BothPlot <- ggplot(Both, aes(x = date, y = count, colour = Data)) +
+    geom_line() +
+    geom_point() +
+    scale_colour_brewer(palette = "Dark2") +
+    theme_bw() +
+    ggtitle("d) Compbined plot") +
+    ylab("Normalised Count") +
+    xlab("time")+
+    theme(legend.position = c(0.86, 0.84),
+          legend.background = element_rect(fill = "white", color = "black"))
+## combinging and saving plot
+# defining saving parameters
+png(filename = here("Figures", "BA2LinPlot.png"), height = 20, width = 25, units = "cm", res = 400)
+# defining positions
+grid.arrange(COGPlot2, COGPlot, ONSPlot, BothPlot, ncol = 2)
+dev.off()
+```
+
+![Fig 3:](Figures/BA2LinPlot.png)
+
 ## 2.
+
+Both datasets show very similar trajectories. When the count is increasing they are almost identical, starting at about the same time and growing at similar rates. They both peak at about the same time as well. However, the decrease in count after the peak is different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
+
+The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, wherase ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into it's cycle and lead to the delayed drop that we see.
+
+# Question 3
+
+```{r Data wrangling}
+COGDeltaM <-  filter(GenPerWeek, lineage == "B.1.617.2",
+                                date >= as.Date("2021-03-27") & 
+                                  date <= as.Date("2021-12-11"))
+COGBA1M <- filter(GenPerWeek, lineage == "BA.1",
+                                date >= as.Date("2021-11-20") & 
+                                  date <= as.Date("2022-01-15"))
+COGBA2M <- filter(GenPerWeek, lineage == "BA.2",
+                                date >= as.Date("2021-12-25") & 
+                                  date <= as.Date("2022-03-26"))
+```
+
+```{r running models}
+COGDeltaMFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
+                                                 s, f0), data = COGDeltaM,
+                    start = list(s = 0.2, f0 = min(COGDeltaM$proportion)))
+COGDeltaMDates <- seq(min(COGDeltaM$date), max(COGDeltaM$date), by = "1 day")
+
+# Calculate predicted frequencies for smooth (continuous) dates 
+COGDeltaMPred <- data.frame(date = COGDeltaMDates,
+  predicted_frequency = logistic_growth(as.numeric(COGDeltaMDates - 
+                                                     min(COGDeltaM$date)),
+                                        coef(COGDeltaMFit)["s"], 
+                                        coef(COGDeltaMFit)["f0"]))
+COGDeltaMPred$Data <- as.factor("Delta")
+
+COGBA1MFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
+                                                 s, f0), data = COGBA1M,
+                    start = list(s = 0.2, f0 = min(COGBA1M$proportion)))
+COGBA1MDates <- seq(min(COGBA1M$date), max(COGBA1M$date), by = "1 day")
+
+# Calculate predicted frequencies for smooth (continuous) dates 
+COGBA1MPred <- data.frame(date = COGBA1MDates,
+  predicted_frequency = logistic_growth(as.numeric(COGBA1MDates - 
+                                                     min(COGBA1M$date)),
+                                        coef(COGBA1MFit)["s"], 
+                                        coef(COGBA1MFit)["f0"]))
+COGBA1MPred$Data <- as.factor("BA.1")
+COGBA1MPred1 <- COGBA1MPred
+COGBA1MPred1$date <- as.Date(as.Date(COGBA1MPred1$date)-238)
+
+COGBA2MFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
+                                                 s, f0), data = COGBA2M,
+                    start = list(s = 0.2, f0 = min(COGBA2M$proportion)))
+COGBA2MDates <- seq(min(COGBA2M$date), max(COGBA2M$date), by = "1 day")
+
+# Calculate predicted frequencies for smooth (continuous) dates 
+COGBA2MPred <- data.frame(date = COGBA2MDates,
+  predicted_frequency = logistic_growth(as.numeric(COGBA2MDates - 
+                                                     min(COGBA2M$date)),
+                                        coef(COGBA2MFit)["s"], 
+                                        coef(COGBA2MFit)["f0"]))
+COGBA2MPred$Data <- as.factor("BA.2")
+COGBA2MPred1 <- COGBA2MPred
+COGBA2MPred1$date <- as.Date(as.Date(COGBA2MPred1$date)-273)
+COGCombMPred <- bind_rows(COGDeltaMPred,COGBA1MPred1,COGBA2MPred1)
+```
+
+```{r plotting}
+COGDeltaMPredPlot <- single_lineage_plot(COGDeltaMPred, COGDeltaMPred$date,
+                                         "time",
+                                         COGDeltaMPred$predicted_frequency,
+                                         "predicted frequency", 
+                                         "a) predicted Delta frequency")
+
+COGBA1MPredPlot <- single_lineage_plot(COGBA1MPred, COGBA1MPred$date,
+                                         "time",
+                                         COGBA1MPred$predicted_frequency,
+                                         "predicted frequency", 
+                                         "b) predicted BA.1 frequency")
+COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
+                                         "time",
+                                         COGBA2MPred$predicted_frequency,
+                                         "predicted frequency", 
+                                         "c) predicted BA.1 frequency")
+
+# creating a plot with both datasets shown together
+COGCombMPredPlot <- ggplot(COGCombMPred, aes(x = date, y = predicted_frequency,
+                                             colour = Data)) +
+    geom_line() +
+    geom_point() +
+    scale_colour_brewer(palette = "Dark2") +
+    theme_bw() +
+    ggtitle("d) Combined plot") +
+    ylab("predicted frequency") +
+    xlab("time")+
+    theme(legend.position = c(0.86, 0.84),
+          legend.background = element_rect(fill = "white", color = "black"))
+## combinging and saving plot
+# defining saving parameters
+png(filename = here("Figures", "COGCombPredPlot.png"), height = 20, width = 25, units = "cm", res = 400)
+# defining positions
+grid.arrange(COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
+             COGCombMPredPlot, ncol = 2)
+dev.off()
+```
+
+![](Figures/COGCombPredPlot.png)
