@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r loading libraries and functions}
+rm(list = ls())
+
 ## loading libraries
 library(tidyverse)
 library(here)
@@ -76,3 +78,60 @@ stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$proportion,
 ```
 
 ![Fig 2:](Figures/ProportionAP.png)
+
+# Question 2
+
+## 1.
+
+```{r Loading Data}
+ONSData <- read.csv("https://raw.githubusercontent.com/mg878/variant_fitness_practical/main/lineage_data.csv")
+# Ensure collection_date is in Date format
+ONSData$collection_date <- as.Date(ONSData$collection_date)
+
+ONSSum <- aggregate(
+  ONSData$major_lineage,
+  by = list(collection_date = ONSData$collection_date, major_lineage = ONSData$major_lineage),
+  FUN = length
+)
+
+# Rename columns for clarity
+colnames(ONSSum) <- c("collection_date", "major_lineage", "lineage_count")
+
+# Calculate total counts per date
+total_counts <- aggregate(ONSSum$lineage_count, by = list(collection_date = ONSSum$collection_date), FUN = sum)
+colnames(total_counts) <- c("collection_date", "total_count")
+
+# Merge total counts back into the lineage summary
+ONSSum <- merge(ONSSum, total_counts, by = "collection_date")
+
+# Calculate frequencies
+ONSSum$lineage_frequency <- ONSSum$lineage_count / ONSSum$total_count
+
+ONSSum$collection_date_bin <- as.Date(
+  floor(as.numeric(as.Date(ONSSum$collection_date)) / 10) * 10, origin = "1970-01-01"
+)
+
+# Aggregate lineage counts for each 10-day bin
+ONSSumBin <- aggregate(
+  lineage_count ~ collection_date_bin + major_lineage,
+  data = ONSSum,
+  FUN = sum
+)
+
+# Calculate total counts within each bin
+total_counts <- aggregate(
+  lineage_count ~ collection_date_bin,
+  data = ONSSumBin,
+  FUN = sum
+)
+colnames(total_counts) <- c("collection_date_bin", "total_count")  # Rename for clarity
+
+# Merge total counts back into the binned data
+ONSSumBin <- merge(ONSSumBin, total_counts, by = "collection_date_bin")
+
+# Recalculate frequencies
+ONSSumBin$lineage_frequency <- ONSSumBin$lineage_count / ONSSumBin$total_count
+
+```
+
+## 2.
