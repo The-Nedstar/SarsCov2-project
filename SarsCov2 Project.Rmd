@@ -11,5 +11,68 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r loading libraries and functions}
+## loading libraries
 library(tidyverse)
+library(here)
+library(RColorBrewer)
+
+## installing self made functions
+source(here("Data", "Functions.R"))
 ```
+
+# Question 1
+
+## 1.
+
+```{r loading data}
+GenPerWeek <- read.csv(here("Data", "Genomes_per_week_in_England.csv"))
+```
+
+## 2.
+
+```{r Changing non major lineages to "Other"}
+## defining major lineages
+MajLin <- c("B.1.1.7", "B.1.617.2", "BA.1", "BA.2", "BA.2.75", 
+            "BA.4", "BA.5", "BA.5.3", "XBB", "Other")
+
+## altering the values in the column to Other if not major
+GenPerWeek <- GenPerWeek %>% 
+  mutate(lineage = case_when(
+    lineage %in% MajLin ~ lineage, TRUE ~ "Other"), # changing values not in major lineages to "Other"
+    lineage = factor(lineage, levels = MajLin),date = as.Date(date)) %>%  # converting the lineage into categorical factors and the date into a date
+  group_by(date, lineage) %>% # grouping values from the same lineage and week
+  summarise(count = sum(count)) # adding them all together into one value
+```
+
+## 3.
+
+```{r visualation in a stacked area plot}
+## using a self made function to create the stacked area plot
+stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$count,
+                  "total counts", GenPerWeek$lineage, 
+                  "total counts of Covid lineages per week in England",
+                  "TotalCountsAP.png")
+```
+
+![Figure 1:](Figures/TotalCountsAP.png)
+
+```{r Proportion graph}
+## calculation proportion values
+# creating a new dataframe which contains the total counts for each week
+TotCount <- aggregate(GenPerWeek$count, by = list(date = GenPerWeek$date), 
+                      FUN = sum)
+# changing the column names so it can be added back
+colnames(TotCount) <- c("date", "total_count")
+# adding the total counts to each row from a set week
+GenPerWeek <- merge(GenPerWeek, TotCount, by = "date")
+# creating a new column with the calculated proportion
+GenPerWeek$proportion <- GenPerWeek$count / GenPerWeek$total_count
+
+## using a self made function to create the stacked area plot
+stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$proportion,
+                  "proportion", GenPerWeek$lineage, 
+                  "Proportion of Covid lineages per week in England", 
+                  "ProportionAP.png")
+```
+
+![Fig 2:](Figures/ProportionAP.png)
