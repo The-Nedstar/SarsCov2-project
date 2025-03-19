@@ -316,46 +316,76 @@ dev.off()
 
 ### ii.
 
-```{r}
+```{r Loop for creating each model and plot}
+## setting up data and parameters for loop
+# Filtering to only relevant datapoints
 DeltaD2M <- filter(DeltaD2Freq, date >= as.Date("2021-05-10"))
+# getting a list of each region name
 Names <- unique(as.character(DeltaD2M$phecname))
+# setting an integer for which iteration is occuring
 n <- 1
+# making a list of letters for titles
 letters <- c("a", "b", "c", "d", "e", "f", "g", "h", "i")
+
+### for loop
+## creating a loop to go through each of the region names
 for (Name in Names){
+  ## getting data
+  # getting the data for the region in question
   Temp <- filter(DeltaD2M, phecname == Name)
+  # dropping unecessary columns
   Temp <- Temp %>% subset(select=c(date, frequency))
+  
+  ## creating the model
+  # defining the logistic growth equation
   TempFit <- nls(frequency ~ logistic_growth(as.numeric(date - min(date)),
                                               s, f0), data = Temp,
                  start = list(s = 0.1, f0 = min(Temp$frequency)))
+    # setting the period of interest
   TempDates <- seq(min(Temp$date), max(Temp$date), by = "1 day")
-
-# Calculate predicted frequencies for smooth (continuous) dates 
+  # Calculating predicted frequencings from model
   TempPred <- data.frame(date = TempDates,
-    predicted_frequency = logistic_growth(as.numeric(TempDates - 
+    frequency = logistic_growth(as.numeric(TempDates - 
                                                      min(Temp$date)),
                                         coef(TempFit)["s"], 
                                         coef(TempFit)["f0"]))
-  TempTitle <- paste(letters[n], ") fitted logistic growth for: ", Name, sep = "")
+  
+  ## setting up data for the plot
+  # setting up the title for the plot inclduing the S value to 4d.p.
+  TempTitle <- paste(letters[n], ") ", Name, ", S = ", round(coef(TempFit)["s"], 4),  sep = "")
+  # labelling each value from the original data
   Temp$Data <- as.factor("real")
+  # labelling each value from the predicted data
   TempPred$Data <- as.factor("predicted")
+  # combining both datasets into one
   TempComb <- bind_rows(Temp, TempPred)
+  
+  ## plotting
+  # defining the plot
   TempPlot <- ggplot(TempComb, aes(x = date, y = frequency, colour = Data)) +
-    geom_line() +
-    geom_point() +
-    scale_colour_jco() +
-    theme_bw() +
-    labs(x = "time", y = "frequency", title = TempTitle) +
-    theme(legend.position = c(0.8835,0.4), 
+    geom_line() + # creating the line
+    geom_point() + # creating the points
+    scale_colour_jco() + # setting the colour palette
+    theme_bw() + # setting other visual parameters
+    labs(x = "time", y = "frequency", title = TempTitle) + # labelling
+    theme(legend.position = c(0.8,0.2), # ensuring correct legend location
           legend.background = element_rect(fill = "white", color = "black"))
+  
+  ## final 
+  # outputting the graph to a variable plot(n)
   assign(paste("plot", as.character(n), sep = ""), TempPlot)
+  # incrementing n by 1 to show moved onto next iteration
   n <- n + 1
 }
 #
 ```
 
 ```{r group plot}
-png(filename = here("Figures", "BigBOI.png"), height = 25, width = 25, units = "cm", res = 400)
+# setting the file parameters
+png(filename = here("Figures", "BigBOI.png"), height = 28, width = 28, units = "cm", res = 600)
   # defining positions
   grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, plot7, plot8, plot9, ncol = 3)
   dev.off()
 ```
+
+![](Figures/BigBOI.png)
