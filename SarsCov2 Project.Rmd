@@ -416,7 +416,7 @@ for (Name in Names){
 
 ```{r group plot}
 # setting the file parameters
-png(filename = here("Figures", "BigBOI.png"), height = 34, width = 34, units = "cm", res = 600)
+png(filename = here("Figures", "RegPlots.png"), height = 34, width = 34, units = "cm", res = 600)
   # defining positions
   grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, plot7, plot8, plot9, ncol = 3)
   dev.off()
