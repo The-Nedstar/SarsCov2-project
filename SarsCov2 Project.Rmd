@@ -443,3 +443,49 @@ The data from our analysis supports the conclusion that the founder's effect is 
 # Question 5
 
 ## 1.
+
+```{r loading daily data}
+DailyCases <- read.csv(here("Data", "daily-new-confirmed-covid-19-cases.csv"))
+colnames(DailyCases) <- c("date", "count")
+DailyCases$date <- as.Date(DailyCases$date)
+SimpleGPW <- subset(GenPerWeek, lineage == "B.1.617.2", select = c(date, count, proportion))
+SimpleGPW <- SimpleGPW %>%
+  rowwise() %>%
+  mutate(date = list(seq.Date(from = date, by = "day", length.out = 7))) %>%
+  ungroup() %>%
+  unnest(cols = date)
+DailyCases <- subset(DailyCases, date >= as.Date(min(SimpleGPW$date)) & 
+                           date <= as.Date(max(SimpleGPW$date)))
+
+SimpleGPW$og_count <- SimpleGPW$count
+SimpleGPW$count <- SimpleGPW$proportion * DailyCases$count
+
+DailyCasesCrop$Data <- as.factor("Daily Data")
+SimpleGPW$Data <- as.factor("Weekly Data")
+
+DayVWeek <- bind_rows(DailyCasesCrop, SimpleGPW)
+```
+
+```{r plotting}
+## Plotting
+# creating a plot for the ONS-CIS data using a self made function
+WeeklyPlot1 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time",
+                                  SimpleGPW$count, "count", "a) weekly cases data (modified)")
+# creating a plot for the COG-UK data using a self made function
+DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases$count, 
+                                 "count", "c) daily cases data")
+# creating a plot for the cropped COG-UK data using a self made function
+WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$og_count,
+                               "count", 
+                               "b) Weekly cases data (original)")
+# creating a plot with both datasets shown together
+DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
+                               DayVWeek$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+## combinging and saving plot
+# defining saving parameters
+grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
+```
+
+![](Figures/DVWPlot.png)
+
+the data seems to perfectly match up but just for a short while??? so like small
