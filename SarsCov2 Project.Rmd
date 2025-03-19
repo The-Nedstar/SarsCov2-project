@@ -189,64 +189,89 @@ The most likely cause for this discrepancy is the difference in sampling techniq
 # Question 3
 
 ```{r Data wrangling}
-COGDeltaM <-  filter(GenPerWeek, lineage == "B.1.617.2",
-                                date >= as.Date("2021-03-27") & 
-                                  date <= as.Date("2021-10-02"))
-COGBA1M <- filter(GenPerWeek, lineage == "BA.1",
-                                date >= as.Date("2021-11-20") & 
-                                  date <= as.Date("2022-01-15"))
-COGBA2M <- filter(GenPerWeek, lineage == "BA.2",
-                                date >= as.Date("2021-12-25") & 
-                                  date <= as.Date("2022-03-26"))
+## filtering by lineage and dates
+# Delta
+COGDeltaM <-  filter(GenPerWeek, lineage == "B.1.617.2", # Lineage
+                                date >= as.Date("2021-03-27") & # date from
+                                  date <= as.Date("2021-10-02")) # date until
+# BA.1
+COGBA1M <- filter(GenPerWeek, lineage == "BA.1", # Lineage
+                                date >= as.Date("2021-11-20") & # date from
+                                  date <= as.Date("2022-01-15"))# date until
+# BA.2
+COGBA2M <- filter(GenPerWeek, lineage == "BA.2", # Lineage
+                                date >= as.Date("2021-12-25") & # date from
+                                  date <= as.Date("2022-03-26"))# date until
 ```
 
 ```{r running models}
+## Delta Model
+# defining the logistic growth equation
 COGDeltaMFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
                                                  s, f0), data = COGDeltaM,
                     start = list(s = 0.2, f0 = min(COGDeltaM$proportion)))
+# setting the period of interest
 COGDeltaMDates <- seq(min(COGDeltaM$date), max(COGDeltaM$date), by = "1 day")
-
-# Calculate predicted frequencies for smooth (continuous) dates 
+# Calculating predicted frequencings from model
 COGDeltaMPred <- data.frame(date = COGDeltaMDates,
   predicted_frequency = logistic_growth(as.numeric(COGDeltaMDates - 
                                                      min(COGDeltaM$date)),
                                         coef(COGDeltaMFit)["s"], 
                                         coef(COGDeltaMFit)["f0"]))
+# Labelling values as the Delta strain
 COGDeltaMPred$Data <- as.factor("Delta")
 
+
+## BA.1 Model
+# defining the logistic growth equation
 COGBA1MFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
                                                  s, f0), data = COGBA1M,
                     start = list(s = 0.2, f0 = min(COGBA1M$proportion)))
+# setting the period of interest
 COGBA1MDates <- seq(min(COGBA1M$date), max(COGBA1M$date), by = "1 day")
 
-# Calculate predicted frequencies for smooth (continuous) dates 
+# Calculating predicted frequencings from model 
 COGBA1MPred <- data.frame(date = COGBA1MDates,
   predicted_frequency = logistic_growth(as.numeric(COGBA1MDates - 
                                                      min(COGBA1M$date)),
                                         coef(COGBA1MFit)["s"], 
                                         coef(COGBA1MFit)["f0"]))
+# Labelling values as the BA.1 strain
 COGBA1MPred$Data <- as.factor("BA.1")
+# creating a new dataset
 COGBA1MPred1 <- COGBA1MPred
+# setting the dates to that of the Delta strain
 COGBA1MPred1$date <- as.Date(as.Date(COGBA1MPred1$date)-238)
 
+
+## BA.2 Model
+# defining the logistic growth equation
 COGBA2MFit <- nls(proportion ~ logistic_growth(as.numeric(date - min(date)),
                                                  s, f0), data = COGBA2M,
                     start = list(s = 0.2, f0 = min(COGBA2M$proportion)))
+# setting the period of interest
 COGBA2MDates <- seq(min(COGBA2M$date), max(COGBA2M$date), by = "1 day")
 
-# Calculate predicted frequencies for smooth (continuous) dates 
+# Calculating predicted frequencings from model 
 COGBA2MPred <- data.frame(date = COGBA2MDates,
   predicted_frequency = logistic_growth(as.numeric(COGBA2MDates - 
                                                      min(COGBA2M$date)),
                                         coef(COGBA2MFit)["s"], 
                                         coef(COGBA2MFit)["f0"]))
+# Labelling values as the Delta strain
 COGBA2MPred$Data <- as.factor("BA.2")
+# creating a new dataset
 COGBA2MPred1 <- COGBA2MPred
+# setting the dates to that of the Delta strain
 COGBA2MPred1$date <- as.Date(as.Date(COGBA2MPred1$date)-273)
+
+## combining all predictions into one dataset
 COGCombMPred <- bind_rows(COGDeltaMPred,COGBA1MPred1,COGBA2MPred1)
 ```
 
 ```{r plotting}
+## making plots
+# plotting Delta using a self made function
 COGDeltaMPredPlot <- single_lineage_plot(COGDeltaMPred, COGDeltaMPred$date,
                                          "time",
                                          COGDeltaMPred$predicted_frequency,
@@ -254,12 +279,15 @@ COGDeltaMPredPlot <- single_lineage_plot(COGDeltaMPred, COGDeltaMPred$date,
                                          paste("a) predicted Delta frequency, s =",
                                                round(coef(COGDeltaMFit)["s"],4)))
 
+# plotting BA.1 using a self made function
 COGBA1MPredPlot <- single_lineage_plot(COGBA1MPred, COGBA1MPred$date,
                                          "time",
                                          COGBA1MPred$predicted_frequency,
                                          "predicted frequency", 
                                          paste("b) predicted BA.1 frequency, s =",
                                                round(coef(COGBA1MFit)["s"],4)))
+
+# plotting BA.2 using a self made function
 COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
                                          "time",
                                          COGBA2MPred$predicted_frequency,
@@ -267,13 +295,12 @@ COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
                                          paste("c) predicted BA.1 frequency, s =",
                                                round(coef(COGBA2MFit)["s"],4)))
 
-# creating a plot with both datasets shown together
+# creating a plot with all datasets shown together
 COGCombMPredPlot <- multi_lineage_plot(COGCombMPred, COGCombMPred$date, "time",
                                        COGCombMPred$predicted_frequency, "predicted frequency",
                                        COGCombMPred$Data, "lineage", "d) Combined plot", 
                                        c(0.88, 0.23))
 ## combinging and saving plot
-# defining saving parameters
 grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
          COGCombMPredPlot)
 
@@ -288,15 +315,18 @@ BA.1 reached fixation the fastest and had the highest selective advantage at 2.5
 ## 1.
 
 ```{r Loading Delta dataset}
+## loading the data
 DeltaD2 <- readRDS(here("Data", "delta-d2.rds"))
+# ensuring there are no values without regions
 DeltaD2 <- subset(DeltaD2, phecname != "")
+# ensuring the date is properly formatted
 DeltaD2$date <- as.Date(DeltaD2$date)
+
+##calculating frequencies
 DeltaD2Freq <- DeltaD2 %>%
-  group_by(phecname, date) %>%
-  summarise(
-    count = sum(Delta == TRUE),
-    ND = sum(Delta == FALSE),
-    frequency = count / (count + ND))
+  group_by(phecname, date) %>% # grouping dates and regions
+  summarise(count = sum(Delta == TRUE), ND = sum(Delta == FALSE), # calculating numbers of Delta and Non-Delta
+            frequency = count / (count + ND)) # calculating the frequency of Delta vs Non-Delta
 ```
 
 ## 2.
@@ -304,8 +334,11 @@ DeltaD2Freq <- DeltaD2 %>%
 ### i.
 
 ```{r plotting delta frequencies by region}
-DeltaByReg <- multi_lineage_plot(DeltaD2Freq, DeltaD2Freq$date, "time", DeltaD2Freq$frequency, "Frequency", DeltaD2Freq$phecname, "region", "Delta Frequency per region", c(0.8835,0.4))
-
+## plotting delta frequencies using a self made plot
+DeltaByReg <- multi_lineage_plot(DeltaD2Freq, DeltaD2Freq$date, "time", DeltaD2Freq$frequency,
+                                 "Frequency", DeltaD2Freq$phecname, "region", 
+                                 "Delta Frequency per region", c(0.8835,0.4))
+# saving to png seperately
 png(filename = here("Figures", "DeltaByReg.png"), height = 10, width = 20, 
     units = "cm", res = 400)
 print(DeltaByReg)
@@ -341,7 +374,7 @@ for (Name in Names){
   TempFit <- nls(frequency ~ logistic_growth(as.numeric(date - min(date)),
                                               s, f0), data = Temp,
                  start = list(s = 0.1, f0 = min(Temp$frequency)))
-    # setting the period of interest
+  # setting the period of interest
   TempDates <- seq(min(Temp$date), max(Temp$date), by = "1 day")
   # Calculating predicted frequencings from model
   TempPred <- data.frame(date = TempDates,
@@ -403,4 +436,10 @@ Difference in time of rise was likely caused by the connections of Locations to 
 
 ### ii.
 
-The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area.
+The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occuring.
+
+The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occuring to lead to this discrepancy.
+
+# Question 5
+
+## 1.
