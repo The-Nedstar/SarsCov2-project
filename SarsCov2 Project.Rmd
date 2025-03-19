@@ -18,6 +18,9 @@ library(tidyverse)
 library(here)
 library(RColorBrewer)
 library(gridExtra)
+library(MCMCpack)
+library(EpiEstim)
+library(incidence)
 
 ## installing self made functions
 source(here("Data", "Functions.R"))
@@ -167,22 +170,12 @@ COGPlot2 <- single_lineage_plot(COGBA2c, COGBA2c$date, "time", COGBA2c$count,
                                "count", 
                                "a) Cropped Lineage tragectory for BA.2 (COG-UK)")
 # creating a plot with both datasets shown together
-BothPlot <- ggplot(Both, aes(x = date, y = count, colour = Data)) +
-    geom_line() +
-    geom_point() +
-    scale_colour_brewer(palette = "Dark2") +
-    theme_bw() +
-    ggtitle("d) Compbined plot") +
-    ylab("Normalised Count") +
-    xlab("time")+
-    theme(legend.position = c(0.86, 0.84),
-          legend.background = element_rect(fill = "white", color = "black"))
+BothPlot <- multi_lineage_plot(Both, Both$date, "time",
+                                       Both$count, "normalised Count",
+                                       Both$Data, "Dataset", "d) Combined plot")
 ## combinging and saving plot
 # defining saving parameters
-png(filename = here("Figures", "BA2LinPlot.png"), height = 20, width = 25, units = "cm", res = 400)
-# defining positions
-grid.arrange(COGPlot2, COGPlot, ONSPlot, BothPlot, ncol = 2)
-dev.off()
+grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 ```
 
 ![Fig 3:](Figures/BA2LinPlot.png)
@@ -198,7 +191,7 @@ The most likely cause for this discrepancy is the difference in sampling techniq
 ```{r Data wrangling}
 COGDeltaM <-  filter(GenPerWeek, lineage == "B.1.617.2",
                                 date >= as.Date("2021-03-27") & 
-                                  date <= as.Date("2021-12-11"))
+                                  date <= as.Date("2021-10-02"))
 COGBA1M <- filter(GenPerWeek, lineage == "BA.1",
                                 date >= as.Date("2021-11-20") & 
                                   date <= as.Date("2022-01-15"))
@@ -258,38 +251,31 @@ COGDeltaMPredPlot <- single_lineage_plot(COGDeltaMPred, COGDeltaMPred$date,
                                          "time",
                                          COGDeltaMPred$predicted_frequency,
                                          "predicted frequency", 
-                                         "a) predicted Delta frequency")
+                                         paste("a) predicted Delta frequency, s =",
+                                               round(coef(COGDeltaMFit)["s"],4)))
 
 COGBA1MPredPlot <- single_lineage_plot(COGBA1MPred, COGBA1MPred$date,
                                          "time",
                                          COGBA1MPred$predicted_frequency,
                                          "predicted frequency", 
-                                         "b) predicted BA.1 frequency")
+                                         paste("b) predicted BA.1 frequency, s =",
+                                               round(coef(COGBA1MFit)["s"],4)))
 COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
                                          "time",
                                          COGBA2MPred$predicted_frequency,
                                          "predicted frequency", 
-                                         "c) predicted BA.1 frequency")
+                                         paste("c) predicted BA.1 frequency, s =",
+                                               round(coef(COGBA2MFit)["s"],4)))
 
 # creating a plot with both datasets shown together
-COGCombMPredPlot <- ggplot(COGCombMPred, aes(x = date, y = predicted_frequency,
-                                             colour = Data)) +
-    geom_line() +
-    geom_point() +
-    scale_colour_brewer(palette = "Dark2") +
-    theme_bw() +
-    ggtitle("d) Combined plot") +
-    ylab("predicted frequency") +
-    xlab("time")+
-    theme(legend.position = c(0.86, 0.84),
-          legend.background = element_rect(fill = "white", color = "black"))
+COGCombMPredPlot <- multi_lineage_plot(COGCombMPred, COGCombMPred$date, "time",
+                                       COGCombMPred$predicted_frequency, "predicted frequency",
+                                       COGCombMPred$Data, "lineage", "d) Combined plot")
 ## combinging and saving plot
 # defining saving parameters
-png(filename = here("Figures", "COGCombPredPlot.png"), height = 20, width = 25, units = "cm", res = 400)
-# defining positions
-grid.arrange(COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
-             COGCombMPredPlot, ncol = 2)
-dev.off()
+grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
+         COGCombMPredPlot)
+
 ```
 
 ![](Figures/COGCombPredPlot.png)

@@ -17,18 +17,19 @@ This practical introduces the concepts of fitness (selection coefficient), growt
 
 By the end of this session, you will:
 
-	•	Understand the differences between fitness advantage and reproduction number of variants.
+```         
+•   Understand the differences between fitness advantage and reproduction number of variants.
 
-	•	Learn to estimate these metrics using genomics data.
-	
-	•	Reflect on how changes in these metrics influence epidemic outcomes and control strategies.
-	
+•   Learn to estimate these metrics using genomics data.
+
+•   Reflect on how changes in these metrics influence epidemic outcomes and control strategies.
+```
 
 We will use SARS-CoV-2 genomic sequence data from the UK, collected through the ONS Covid Infection Survey (ONS-CIS) and COVID-19 Genomics UK Consortium (COG-UK).
 
 ## Exploring the ONS-CIS data
 
-Let’s begin by exploring how the SARS-CoV-2 epidemic unfolded in the UK using [data from the ONS-CIS](https://royalsocietypublishing.org/doi/10.1098/rspb.2023.1284). The ONS-CIS (Office for National Statistics COVID-19 Infection Survey) is a household-based surveillance study conducted across a representative sample of UK households. Sampling was carried out continuously over three years, with most participants undergoing RT-PCR testing approximately once a month. Virus samples with high viral loads (Ct < 30) were sequenced to identify the circulating SARS-CoV-2 variants.
+Let’s begin by exploring how the SARS-CoV-2 epidemic unfolded in the UK using [data from the ONS-CIS](https://royalsocietypublishing.org/doi/10.1098/rspb.2023.1284). The ONS-CIS (Office for National Statistics COVID-19 Infection Survey) is a household-based surveillance study conducted across a representative sample of UK households. Sampling was carried out continuously over three years, with most participants undergoing RT-PCR testing approximately once a month. Virus samples with high viral loads (Ct \< 30) were sequenced to identify the circulating SARS-CoV-2 variants.
 
 To simplify the long list of lineage names assigned by the Pango nomenclature, we group them into broader ‘major lineages.’ For this practical, we focus on variants that caused significant waves in the UK since late 2020. These include: Alpha (B.1.1.7), Delta (B.1.617.2), and various Omicron sublineages, including BA.1, BA.2, BA.4, BA.5, and XBB. We put variants from other lineage into the 'Other' category.
 
@@ -160,6 +161,7 @@ lineage_summary_binned$lineage_frequency <- lineage_summary_binned$lineage_count
 # Preview the binned data
 head(lineage_summary_binned)
 ```
+
 Now that we have created the `lineage_summary_binned` data frame, we can proceed to visualise the frequencies of major lineages over time. This plot shows the smoothed proportions of each major lineage in the population, aggregated into 10-day intervals.
 
 ```{r plot-daily-frequencies, message=FALSE, warning=FALSE}
@@ -178,32 +180,31 @@ ggplot(lineage_summary_binned, aes(x = collection_date_bin, y = lineage_frequenc
 
 ## Measuring the growth rate of a variant with a fitness advantage
 
-The rate at which a variant with a fitness advantage spreads within a population is a fundamental question in population genetics theory. Considering a population of constant size with two variants, \(V_1\) and \(V_2\), where the generation time (time it takes for one person to infect another) is also constant. Variant \(V_2\) has a reproductive advantage over \(V_1\), producing more offspring by a factor of \(1 + s\), where \(s\) is the **selection coefficient**.
+The rate at which a variant with a fitness advantage spreads within a population is a fundamental question in population genetics theory. Considering a population of constant size with two variants, $V_1$ and $V_2$, where the generation time (time it takes for one person to infect another) is also constant. Variant $V_2$ has a reproductive advantage over $V_1$, producing more offspring by a factor of $1 + s$, where $s$ is the **selection coefficient**.
 
-The selection coefficient \(s\) quantifies the fitness advantage of one variant over another:
+The selection coefficient $s$ quantifies the fitness advantage of one variant over another:
 
-- If \(s > 0\), variant \(V_2\) has a fitness advantage and increases in frequency.
+-   If $s > 0$, variant $V_2$ has a fitness advantage and increases in frequency.
 
-- If \(s = 0\), both variants are equally fit, and their frequencies remain constant over time.
+-   If $s = 0$, both variants are equally fit, and their frequencies remain constant over time.
 
-- If \(s < 0\), variant \(V_2\) has a disadvantage and decreases in frequency.
+-   If $s < 0$, variant $V_2$ has a disadvantage and decreases in frequency.
 
-The deterministic logistic growth model predicts that the frequency \(f(t)\) of an advantageous variant follows this equation:
+The deterministic logistic growth model predicts that the frequency $f(t)$ of an advantageous variant follows this equation:
 
-\[
+$$
 f(t) = \frac{f(0) e^{st}}{1 + f(0) \left( e^{st} - 1 \right)}
-\]
+$$
 
 where:
 
-- \(s\) is the selection coefficient.
+-   $s$ is the selection coefficient.
 
-- \(f(t)\) is the frequency of the advantageous variant at time \(t\),
+-   $f(t)$ is the frequency of the advantageous variant at time $t$,
 
-- \(f(0)\) is the initial frequency of the variant with the advantage \(f(0) = \frac{1}{N}\) if there was a single introduction of the variant into a constant population size of \(N\)).
+-   $f(0)$ is the initial frequency of the variant with the advantage $f(0) = \frac{1}{N}$ if there was a single introduction of the variant into a constant population size of $N$).
 
-
-To visualise the process, play with the parameters of the model and see how they impact the time to fixation \(f(t^*)=1\):
+To visualise the process, play with the parameters of the model and see how they impact the time to fixation $f(t^*)=1$:
 
 ```{r plot-logistic-growth, echo=TRUE, message=FALSE, warning=FALSE}
 # Define parameters
@@ -234,7 +235,7 @@ ggplot(data, aes(x = t, y = frequency)) +
   theme_minimal()
 ```
 
-This shows you how the selective advantage \(s\) drives the increase in the frequency of a variant with an increased transmissibility and/or immune evasion properties in a host population like humans. Initially, growth is slow due to the low starting frequency (\(f(0) = \frac{1}{N}\)), but as the variant becomes more common, its growth accelerates until it approaches fixation.
+This shows you how the selective advantage $s$ drives the increase in the frequency of a variant with an increased transmissibility and/or immune evasion properties in a host population like humans. Initially, growth is slow due to the low starting frequency ($f(0) = \frac{1}{N}$), but as the variant becomes more common, its growth accelerates until it approaches fixation.
 
 ### Estimating the growth rate for the Delta (B.1.617.2) variant
 
@@ -242,24 +243,23 @@ Now, let's estimate the growth rate of the Delta (B.1.617.2) major lineage using
 
 The Delta variant experienced a rapid rise in frequency in the UK before declining due to competition with the Omicron BA.1 variant. To capture its growth rate:
 
-- We need to analyse the frequency of Delta during its **increasing trajectory**.
+-   We need to analyse the frequency of Delta during its **increasing trajectory**.
 
-- Using a logistic growth model, fit a linear model to the log-odds of the frequency over time and estimate \(s\).
+-   Using a logistic growth model, fit a linear model to the log-odds of the frequency over time and estimate $s$.
 
-The growth rate \(s\) can be estimated as the slope of the log-odds of the variant's frequency over time.
+The growth rate $s$ can be estimated as the slope of the log-odds of the variant's frequency over time.
 
-The relationship is given by:
-\[
+The relationship is given by: $$
 \log \left( \frac{f(t)}{1 - f(t)} \right) = s \cdot t + f(0)
-\]
+$$
 
 Where:
 
-- \(f(t)\) is the frequency of Delta at time \(t\),
+-   $f(t)$ is the frequency of Delta at time $t$,
 
-- \(s\) is the growth rate,
+-   $s$ is the growth rate,
 
-- \(f(0)\) is the initial (non-zero) frequency of the variant.
+-   $f(0)$ is the initial (non-zero) frequency of the variant.
 
 Now, first identify the time interval over which Delta is increasing in frequency until it reaches fixation (use `collection_date_bin`).
 
@@ -278,8 +278,7 @@ ggplot(delta_data, aes(x = collection_date_bin, y = lineage_frequency)) +
   theme_minimal()
 ```
 
-Delta started growing in the UK from late April and reached its peak around July 2021.
-Now, let's find the growth rate for Delta using the `logistic_growth` model, discussed earlier. Use `nls(lineage_frequency ~ logistic_growth 'function',  data = delta_growth_phase, start = 'some initial guess')` to find best fit value for \(s\) 
+Delta started growing in the UK from late April and reached its peak around July 2021. Now, let's find the growth rate for Delta using the `logistic_growth` model, discussed earlier. Use `nls(lineage_frequency ~ logistic_growth 'function',  data = delta_growth_phase, start = 'some initial guess')` to find best fit value for $s$
 
 ```{r estimate-delta-growth-rate-part2, echo=TRUE, message=FALSE, warning=FALSE}
 # Subset data to only include the increasing trajectory for Delta
@@ -328,21 +327,21 @@ ggplot(delta_growth_phase, aes(x = collection_date_bin)) +
   theme_minimal()
 ```
 
-So, back in 2021 in the UK Delta was replacing Alpha at a rate of `s=0.1345` per day which means it was increasing in its frequency at a rate of about 14% per day relative to Alpha, under the logistic growth framework. In other words, Delta's frequency approximately doubled every \(t=log(2)/s \approx 5\) days,
+So, back in 2021 in the UK Delta was replacing Alpha at a rate of `s=0.1345` per day which means it was increasing in its frequency at a rate of about 14% per day relative to Alpha, under the logistic growth framework. In other words, Delta's frequency approximately doubled every $t=log(2)/s \approx 5$ days,
 
 ### Reflection: asssessing the logistic growth model fit
 
 Now that we’ve fitted a logistic growth model to the Delta variant data, let's take a moment to think about the results and the assumptions of the model.
 
-1. **Quality of the model fit**:
+1.  **Quality of the model fit**:
 
-   - Does the logistic growth model seem to be an appropriate fit for the frequency trajectory of the Delta variant? 
-   
+    -   Does the logistic growth model seem to be an appropriate fit for the frequency trajectory of the Delta variant?
+
 The logistic growth model may appear appropriate for the Delta variant during its initial exponential growth phase. The fit aligns well with the observed data in this period, capturing the rapid increase in frequency. The epidemiological context, however, is important here: factors such as superspreading events, geographic heterogeneity, and temporal changes in interventions (e.g., mask mandates, travel bans) complicate the assumption of a uniform logistic trajectory. The data is also inherently noisy. Noise in sequencing data and delays in reporting could affect the quality of the fit. Also important to note that one of the advantages of ONS-CIS dataset over others is the fact that sampling biases are much more limited given that individuals are tested regardless of whether they present symptoms or not and are from a representative sample of the UK population.
-   
-2. **Assumptions of the logistic model**:
 
-   - Are the assumptions behind the deterministic logistic growth model realistic in the context of SARS-CoV-2 transmission and the Delta variant? 
+2.  **Assumptions of the logistic model**:
+
+    -   Are the assumptions behind the deterministic logistic growth model realistic in the context of SARS-CoV-2 transmission and the Delta variant?
 
 *Constant population size*: Throughout the pandemic, the virus population size rose and fell due to rising immunity from vaccination and prior infections as well as public health interventions like lockdowns and travel restrictions.
 
@@ -350,14 +349,14 @@ The logistic growth model may appear appropriate for the Delta variant during it
 
 *Deterministic dynamics*: Stochastic transmission events within a finite-size population can result in random fluctuations of pathogen variant frequencies (also known as genetic drift).
 
-*Homogeneous population*: Founder effects (loss of genetic diversity when a small subset of a population colonises a new region) may distort any interpretation of growth rate advantage of variants if the underlying data only comes from one geographical region.  
+*Homogeneous population*: Founder effects (loss of genetic diversity when a small subset of a population colonises a new region) may distort any interpretation of growth rate advantage of variants if the underlying data only comes from one geographical region.
 
 *Constant selective advantage*: As immunity builds in the host population, the selective advantage of variants may diminish.
 
-3. **Improving the model**:
+3.  **Improving the model**:
 
-   - What is the highest frequency that BA.4, BQ.1, and BA.2.75 lineages ever reach in the UK? Would you be still be able to use the logistic growth model to estimate their growth rate?
-   
+    -   What is the highest frequency that BA.4, BQ.1, and BA.2.75 lineages ever reach in the UK? Would you be still be able to use the logistic growth model to estimate their growth rate?
+
 ```{r find-max-frequency, echo=TRUE, message=FALSE, warning=FALSE}
 # Filter data for BA.4 and BA.2.75
 filtered_data <- subset(
@@ -376,7 +375,7 @@ max_frequencies <- aggregate(
 print(max_frequencies)
 ```
 
-The logistic growth model presented in this practical assumes that a single variant ultimately reaches fixation \(f(t)=1\). It cannot, therefore, estimate growth rate of multiple co-circulating variants under dynamic competition like BA.4, BA.2.75, BQ.1, and XBB. 
+The logistic growth model presented in this practical assumes that a single variant ultimately reaches fixation $f(t)=1$. It cannot, therefore, estimate growth rate of multiple co-circulating variants under dynamic competition like BA.4, BA.2.75, BQ.1, and XBB.
 
 In such cases, alternative approaches may be more appropriate:
 
@@ -388,34 +387,33 @@ In such cases, alternative approaches may be more appropriate:
 
 The choice of model depends on:
 
-- Your research question,
+-   Your research question,
 
-- The quality and resolution of your data,
+-   The quality and resolution of your data,
 
-- The assumptions you are willing to make about population dynamics.
+-   The assumptions you are willing to make about population dynamics.
 
 For example:
 
-- If interactions between variants are minimal, a **generalised multinomial logistic regression** may suffice.
+-   If interactions between variants are minimal, a **generalised multinomial logistic regression** may suffice.
 
-- If competition between variants is significant, a **mechanistic framework** could provide better insights.
+-   If competition between variants is significant, a **mechanistic framework** could provide better insights.
 
 ## Measuring time-varying reproduction number of a variant
 
-The reproduction number (\(R_t\)) is a key metric in epidemiology. It represents the average number of secondary infections caused by a single infected individual at a given time \(t\). The value of \(R_t\) can help determine whether an epidemic is growing (\(R_t > 1\)) or declining (\(R_t < 1\)).
+The reproduction number ($R_t$) is a key metric in epidemiology. It represents the average number of secondary infections caused by a single infected individual at a given time $t$. The value of $R_t$ can help determine whether an epidemic is growing ($R_t > 1$) or declining ($R_t < 1$).
 
-In this part of the practical, we will be using the [EpiEstim](https://github.com/mrc-ide/EpiEstim) package. It calculates \(R_t\) based on the incidence (the number of new cases during a specified time period) and serial interval (time from the symptom onset of one individual to the symptom onset of the person they infect). \(R_t\) is estimated by comparing the observed incidence at time \(t\) to the expected number of cases, given the incidence in earlier time intervals and the serial interval distribution.
+In this part of the practical, we will be using the [EpiEstim](https://github.com/mrc-ide/EpiEstim) package. It calculates $R_t$ based on the incidence (the number of new cases during a specified time period) and serial interval (time from the symptom onset of one individual to the symptom onset of the person they infect). $R_t$ is estimated by comparing the observed incidence at time $t$ to the expected number of cases, given the incidence in earlier time intervals and the serial interval distribution.
 
-\[
+$$
 R_t = \frac{I(t)}{\sum_{s=1}^{t} I(t-s) \, w(s)}
-\]
+$$
 
-where \(I(t)\) is the number of new cases (incidence) at time \(t\) and \(w(s)\) is the probability mass function of the serial interval at lag \(s\). The denominator in the equation above is known as total infectiousness of infected individuals at time \(t\) and is equal to the sum of infection incidence up to time step \(t-1\), weighted by the infectivity function, \(w(s)\). 
+where $I(t)$ is the number of new cases (incidence) at time $t$ and $w(s)$ is the probability mass function of the serial interval at lag $s$. The denominator in the equation above is known as total infectiousness of infected individuals at time $t$ and is equal to the sum of infection incidence up to time step $t-1$, weighted by the infectivity function, $w(s)$.
 
+### Estimating $R_t$ for the Delta (B.1.617.2) variant
 
-### Estimating \(R_t\) for the Delta (B.1.617.2) variant
-
-To estimate \(R_t\) for Delta using EpiEstim, we need to provide daily cases of Delta as an input, EpiEstim then performs further smoothing to reduce the effect of sampling noise from the data. We use the daily number of Delta sequences from ONS-CIS as a proxy for incidence (is this a reasonable assumption?).
+To estimate $R_t$ for Delta using EpiEstim, we need to provide daily cases of Delta as an input, EpiEstim then performs further smoothing to reduce the effect of sampling noise from the data. We use the daily number of Delta sequences from ONS-CIS as a proxy for incidence (is this a reasonable assumption?).
 
 ```{r plot-delta-counts, echo=TRUE, message=FALSE, warning=FALSE}
 # Filter daily counts for Delta directly from lineage_summary*
@@ -435,7 +433,7 @@ ggplot(delta_daily_counts, aes(x = collection_date, y = lineage_count)) +
   theme_minimal()
 ```
 
-Now, in order to estimate \(R_t\) for Delta, we also need to give the mean and standard deviation of the serial interval as additional input to EpiEstim. For this we use `mean_si = 4.1` days and `std_si = 2.8` days which were estimated for Delta in this [study](https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2022.27.6.2200042).
+Now, in order to estimate $R_t$ for Delta, we also need to give the mean and standard deviation of the serial interval as additional input to EpiEstim. For this we use `mean_si = 4.1` days and `std_si = 2.8` days which were estimated for Delta in this [study](https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2022.27.6.2200042).
 
 ```{r estimate-delta-rt, echo=TRUE, message=FALSE, warning=FALSE}
 # Load necessary libraries
@@ -481,28 +479,28 @@ plot(rt_results, what = "R", legend = FALSE) +
   )
 ```
 
-So, in the early phase of Delta spread, \(R_t \approx 1.85\). 
+So, in the early phase of Delta spread, $R_t \approx 1.85$.
 
 ### Reflection: variant competition during a declining outbreak
 
-**Does our estimated \(R_t\) for Delta match with our expectations from its estimated growth rate?** (hint: use the approximation \( s \approx log(R_t)/T_g\) where \(T_g=4.7\) days is the [generation time of Delta](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(22)00001-9/fulltext); this approximation is only valid during the exponential growth phase of an epidemic)
+**Does our estimated** $R_t$ for Delta match with our expectations from its estimated growth rate? (hint: use the approximation $s \approx log(R_t)/T_g$ where $T_g=4.7$ days is the [generation time of Delta](https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(22)00001-9/fulltext); this approximation is only valid during the exponential growth phase of an epidemic)
 
-Answer: Yes, using the above formula, we get \(s\approx 0.13\) which is very similar to what we found earlier for the growth rate of Delta using the logistic growth model.
+Answer: Yes, using the above formula, we get $s\approx 0.13$ which is very similar to what we found earlier for the growth rate of Delta using the logistic growth model.
 
-**Can you imagine a scenario where the total outbreak size is declining but one variant is replacing another one? **
+**Can you imagine a scenario where the total outbreak size is declining but one variant is replacing another one?**
 
-Answer: Yes, the selective advantage (\(s>0\)) allows the variant to grow in **relative** frequency over time even if the absolute size of the infected population is declining (\(R_t<1\)).
+Answer: Yes, the selective advantage ($s>0$) allows the variant to grow in **relative** frequency over time even if the absolute size of the infected population is declining ($R_t<1$).
 
 **Under such a scenario would you still be able to use the logistic growth model to estimate the growth advantage of a variant? What extra assumptions would you be required to make to be able to apply the logistic growth model in this scenario?**
 
-Answer: Yes, the logistic growth model can approximate (\(s>0\)) if the total virus population size declines *uniformly* across both variants. Also, changes in relative frequency must be primarily driven by selective advantage and not other confounding factors such as immunity, interventions, or founder effects. 
+Answer: Yes, the logistic growth model can approximate ($s>0$) if the total virus population size declines *uniformly* across both variants. Also, changes in relative frequency must be primarily driven by selective advantage and not other confounding factors such as immunity, interventions, or founder effects.
 
 ## Acknowledgements and further readings
 
 I would like to thank Erik Volz for providing the COG-UK data used in part of the assignment.
 
-https://www.nature.com/articles/s41576-023-00610-z
+<https://www.nature.com/articles/s41576-023-00610-z>
 
-https://royalsociety.org/-/media/policy/projects/set-c/set-covid-19-r-estimates.pdf
+<https://royalsociety.org/-/media/policy/projects/set-c/set-covid-19-r-estimates.pdf>
 
-https://royalsocietypublishing.org/doi/10.1098/rspb.2006.3754
+<https://royalsocietypublishing.org/doi/10.1098/rspb.2006.3754>
