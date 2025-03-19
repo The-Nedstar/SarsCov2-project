@@ -48,7 +48,7 @@ multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTi
 
 ## combining plots into a grid
 grid_plot <- function(Filename, Plot1, Plot2, Plot3, Plot4){
-  png(filename = here("Figures", Filename), height = 20, width = 25, units = "cm", res = 400)
+  png(filename = here("Figures", Filename), height = 20, width = 25, units = "cm", res = 600)
   # defining positions
   grid.arrange(Plot1, Plot2, Plot3, Plot4, ncol = 2)
   dev.off()
