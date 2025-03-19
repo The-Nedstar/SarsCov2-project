@@ -12,7 +12,7 @@ logistic_growth <- function(t, s, f0) {
 stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, File) {
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis, fill = Fill)) +
     geom_area() +
-    scale_fill_brewer(palette = "Set3") +
+    scale_fill_jco() +
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title)
   
@@ -33,15 +33,15 @@ single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
 }
 
 ##double
-multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTitle, Title) {
+multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTitle, Title, LegPos) {
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
                    colour = Colour)) +
     geom_line() +
     geom_point() +
-    scale_colour_brewer(palette = "Dark2") +
+    scale_colour_jco() +
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +
-    theme(legend.position = c(0.85, 0.75),
+    theme(legend.position = LegPos,
           legend.background = element_rect(fill = "white", color = "black"))
   return(temp)
 }
