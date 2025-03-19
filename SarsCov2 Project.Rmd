@@ -352,7 +352,8 @@ for (Name in Names){
   
   ## setting up data for the plot
   # setting up the title for the plot inclduing the S value to 4d.p.
-  TempTitle <- paste(letters[n], ") ", Name, ", S = ", round(coef(TempFit)["s"], 4),  sep = "")
+  TempTitle <- paste(letters[n], ") ", Name, ", S = ", round(coef(TempFit)["s"], 3), 
+                     ", F0 =", round(coef(TempFit)["f0"], 3),  sep = "")
   # labelling each value from the original data
   Temp$Data <- as.factor("real")
   # labelling each value from the predicted data
@@ -382,10 +383,24 @@ for (Name in Names){
 
 ```{r group plot}
 # setting the file parameters
-png(filename = here("Figures", "BigBOI.png"), height = 28, width = 28, units = "cm", res = 600)
+png(filename = here("Figures", "BigBOI.png"), height = 34, width = 34, units = "cm", res = 600)
   # defining positions
   grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, plot7, plot8, plot9, ncol = 3)
   dev.off()
 ```
 
 ![](Figures/BigBOI.png)
+
+## 3.
+
+### i.
+
+The West Midlands had the fastest outbreak with an S of 0.1751.
+
+The North West had the earliest rise in frequencies with an F0 of 0.537.
+
+Difference in time of rise was likely caused by the connections of Locations to each other and do locations outside of England. Locations with large airports for instance are likely candidates for entry of a new strain into the country. Speed of outbreak will be determined by many conditions, including both the movement of people, but also the sucseptibility of the population. Potentially there are greater proportions of young and elderly people in the West Midlands, or a greater proportion of people who had not been exposed to any form of Covid before.
+
+### ii.
+
+The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area.
