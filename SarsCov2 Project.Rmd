@@ -29,6 +29,12 @@ source(here("Data", "Functions.R"))
 
 # Introduction
 
+In this document, we take a look at three datasets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 varients and how the datasets differ from eachother. There are four datasets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from Positive PCR tests. *daily-new-confirmed-covid-19-cases.csv* which contains daily case counts for all strains of covid simultaneously and is a more representative dataset of total cases. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to eachother when it comes to the Delta strain. The final dataset comes from the Office for National Statistics Coronavirus Infection Survey (ONS-CIS) [@coronavi]. This contains many individual cases of coranvirus and which lineage it is apart of.
+
+All of these files are available on an anonymised github, under the "Data" folder [@the-nedstar2025]. This repository also contains all of the figures as .png files and the renv folder for this to be run with the all of the correct packages installed. Inside the "Data" folder also contains the file *Functions.R* which contains all of the self made functions used in this analaysis, the entire contents of this file is also present at the end of the document in the Appendix.
+
+Link for anonymised github: <https://github.com/The-Nedstar/SarsCov2-project>
+
 ------------------------------------------------------------------------
 
 # Question 1
@@ -65,7 +71,7 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
                   "TotalCountsAP.png")
 ```
 
-![Fig 1:](Figures/TotalCountsAP.png)
+![Fig 1: Total count of Covid-19 infections as from the COG-UK](Figures/TotalCountsAP.png)
 
 ```{r plotting Proportion}
 ## calculation proportion values
