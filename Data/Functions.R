@@ -27,8 +27,8 @@ stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, F
 single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis)) +
-    geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points
+    geom_line() + # line between points on top
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title)
   ## return the plot for further modification rather than save as png
@@ -40,8 +40,8 @@ multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTi
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
                    colour = Colour)) +
-    geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points
+    geom_line() + # line between points on top
     scale_colour_jco() + # setting palette
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +

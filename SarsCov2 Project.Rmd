@@ -71,7 +71,7 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
                   "TotalCountsAP.png")
 ```
 
-![Fig 1: Total count of Covid-19 infections as from the COG-UK](Figures/TotalCountsAP.png)
+![Fig 1: Total count of Covid-19 infections as from the COG-UK weekly dataset. Coloured based on the identified lineage.](Figures/TotalCountsAP.png)
 
 ```{r plotting Proportion}
 ## calculation proportion values
@@ -92,7 +92,7 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
                   "ProportionAP.png")
 ```
 
-![Fig 2:](Figures/ProportionAP.png)
+![Fig 2: proportion of Covid-19 infections made up by each lineage as from the COG-UK weekly dataset. Coloured based on the identified lineage.](Figures/ProportionAP.png)
 
 ------------------------------------------------------------------------
 
@@ -192,7 +192,7 @@ BothPlot <- multi_lineage_plot(Both, Both$date, "time",Both$count, "normalised C
 grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 ```
 
-![Fig 3:](Figures/BA2LinPlot.png)
+![Fig 3: Comparison of lineage trajectories for the BA.2 lineage from the COG-UK and ONS-CIS dataset. a) COG-UK data cropeed to the same timepoints as the ONS-CIS data. b) all of the COG-UK data. c) all of the ONS-CIS data. d) both datasets displayed together, the counts from the ONS-CIS dataset has been multiplied by 6.2 for ease of comparison, coloured by dataset.](Figures/BA2LinPlot.png)
 
 ## 2.
 
@@ -308,7 +308,7 @@ COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
                                          "time",
                                          COGBA2MPred$predicted_frequency,
                                          "predicted frequency", 
-                                         paste("c) predicted BA.1 frequency, s =",
+                                         paste("c) predicted BA.2 frequency, s =",
                                                round(coef(COGBA2MFit)["s"],4)))
 
 # creating a plot with all datasets shown together
@@ -322,7 +322,7 @@ grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPred
 
 ```
 
-![](Figures/COGCombPredPlot.png)
+![Fig 4: Comparison of logistic growth models for the lineages, Delta (B.1.617.2), BA.1 and BA.2 a-c) logistic model for Delta, BA.1 and BA.2 respectively. d) combination of the output of all 3 models, all set to start from the same date for ease of comparison, Coloured by strain](Figures/COGCombPredPlot.png)
 
 BA.1 reached fixation the fastest and had the highest selective advantage at 2.597, Delta was then second with s = 0.1268 and lastly BA.2 with s = 0.1044.
 
@@ -355,15 +355,15 @@ DeltaD2Freq <- DeltaD2 %>%
 ## plotting delta frequencies using a self made plot
 DeltaByReg <- multi_lineage_plot(DeltaD2Freq, DeltaD2Freq$date, "time", DeltaD2Freq$frequency,
                                  "Frequency", DeltaD2Freq$phecname, "region", 
-                                 "Delta Frequency per region", c(0.8835,0.4))
+                                 "Delta Frequency per region", c(0.8835,0.325))
 # saving to png seperately
-png(filename = here("Figures", "DeltaByReg.png"), height = 10, width = 20, 
+png(filename = here("Figures", "DeltaByReg.png"), height = 13, width = 24, 
     units = "cm", res = 400)
 print(DeltaByReg)
 dev.off()
 ```
 
-![](Figures/DeltaByReg.png)
+![Fig 5: plot showing the Frequency of Delta per Region of England overtime](Figures/DeltaByReg.png)
 
 ### ii.
 
@@ -440,7 +440,7 @@ png(filename = here("Figures", "RegPlots.png"), height = 34, width = 34, units =
   dev.off()
 ```
 
-![](Figures/BigBOI.png)
+![Fig 6: combined plot of the frequencies of Delta at each of the 9 regions as calculated from the delta-d2.rds dataset and the frequencies predicted from a logisitic growth model. a-i) plot for each independent region showing the original data and frequencies predicted from the logistic growth model in different colours.](Figures/RegPlots.png)
 
 ## 3.
 
@@ -516,14 +516,14 @@ WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$
                                "b) Weekly cases data (original)")
 # creating a plot with both datasets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
-                               DayVWeek$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+                               DayVWeek$Data, "Dataset", "d) Combined plot", c(0.80, 0.80))
 
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
 ```
 
-![](Figures/DVWPlot.png)
+![Fig 7: Comparison of the weekly and daily datasets. a) frequencies from the weekly dataset multiplied by the count from the daily dataset. b) original counts from the weekly data. c) counts from the daily dataset. d) comparison of the two datasets using the data shown in (a), coloured by dataset.](Figures/DVWPlot.png)
 
 the data seems to perfectly match up but just for a short while??? so like small
 
@@ -581,7 +581,7 @@ grid.arrange(RtPlot, ONSRtPlot, ncol = 2)
 dev.off()
 ```
 
-![](Figures/RTPlot.png)
+![Fig 8: Comparison of the reproduction number estimate overtime using the Daily COG-UK data (a) and the ONS-CIS Data (b)](Figures/RTPlot.png)
 
 ```{r displaying values initial values, echo=FALSE}
 ## displaying the initial values
@@ -631,8 +631,8 @@ stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, F
 single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis)) +
-    geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points
+    geom_line() + # line between points on top
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title)
   ## return the plot for further modification rather than save as png
@@ -644,8 +644,8 @@ multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTi
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
                    colour = Colour)) +
-    geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points
+    geom_line() + # line between points on top
     scale_colour_jco() + # setting palette
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +
