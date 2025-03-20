@@ -29,6 +29,8 @@ source(here("Data", "Functions.R"))
 
 # Introduction
 
+------------------------------------------------------------------------
+
 # Question 1
 
 ## 1.
@@ -85,6 +87,8 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
 ```
 
 ![Fig 2:](Figures/ProportionAP.png)
+
+------------------------------------------------------------------------
 
 # Question 2
 
@@ -189,6 +193,8 @@ grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 Both datasets show very similar trajectories. When the count is increasing they are almost identical, starting at about the same time and growing at similar rates. They both peak at about the same time as well. However, the decrease in count after the peak is different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
 
 The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, wherase ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into it's cycle and lead to the delayed drop that we see.
+
+------------------------------------------------------------------------
 
 # Question 3
 
@@ -313,6 +319,8 @@ grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPred
 ![](Figures/COGCombPredPlot.png)
 
 BA.1 reached fixation the fastest and had the highest selective advantage at 2.597, Delta was then second with s = 0.1268 and lastly BA.2 with s = 0.1044.
+
+------------------------------------------------------------------------
 
 # Question 4
 
@@ -444,6 +452,8 @@ The founder's effect is when a small selection of the total disease population e
 
 The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occuring to lead to this discrepancy.
 
+------------------------------------------------------------------------
+
 # Question 5
 
 ## 1.
@@ -573,6 +583,8 @@ cat("--- Initial Rt values ---\n")
 cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 ```
+
+------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 
