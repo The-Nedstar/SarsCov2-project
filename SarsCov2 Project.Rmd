@@ -314,7 +314,7 @@ COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
 # creating a plot with all datasets shown together
 COGCombMPredPlot <- multi_lineage_plot(COGCombMPred, COGCombMPred$date, "time",
                                        COGCombMPred$predicted_frequency, "predicted frequency",
-                                       COGCombMPred$Data, "lineage", "d) Combined plot", 
+                                       COGCombMPred$Data, "Lineage", "d) Combined plot", 
                                        c(0.88, 0.23))
 ## combinging and saving plot
 grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
@@ -596,10 +596,14 @@ cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 
 # Appendix
 
+## References
+
 ::: {#refs}
 :::
 
 ## Contents of Functions.R
+
+This file is can also be found on the anonymised github page [@the-nedstar2025].
 
 ```{r functions, eval=FALSE, include=TRUE}
 ###########################################
