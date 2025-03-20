@@ -27,6 +27,8 @@ library(ggsci)
 source(here("Data", "Functions.R"))
 ```
 
+# Introduction
+
 # Question 1
 
 ## 1.
@@ -497,6 +499,7 @@ WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$
 # creating a plot with both datasets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
                                DayVWeek$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
@@ -524,26 +527,38 @@ RtResults <- estimate_R(incid = RtData, method = "parametric_si",
 ```
 
 ```{r ONS-CIS Rt from practical}
+## loading incidence data saved from the practical code
+# loading the data from the ONS-CIS
 ONSRtData <- read.csv(here("Data", "incidence_data_ONS.csv"))
+# selecting only the relevant data
 ONSRtData <- subset(ONSRtData, select = c(dates, I))
+# ensuring the dates are formatted correctly
 ONSRtData$dates <- as.Date(ONSRtData$dates)
 
+## estimating Rt for the ONS dataset
 ONSRtResults <- estimate_R(incid = ONSRtData, method = "parametric_si",
                         config = make_config(SerialInt))
 ```
 
 ```{r Rt plot creation}
+## defining individual plots
+# creating the plot for the daily data
 RtPlot <- plot(RtResults, what = "R", legend = FALSE) +
   labs(title = expression("a) Time-varying reproduction number" ~ (R[t]) ~ 
                             "(Daily Data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
+# creating the plot for the ONS-CIS data
 ONSRtPlot <- plot(ONSRtResults, what = "R", legend = FALSE) +
   labs(title = expression("b) Time-varying reproduction number" ~ (R[t]) ~ 
                             "(ONS-CIS Data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
-png(filename = here("Figures", "RtPlot.png"), height = 10, width = 28, units = "cm", res = 400)
+
+## combining plots as a png
+# defining png parameters
+png(filename = here("Figures", "RtPlot.png"), height = 10, width = 28, units = "cm", res = 600)
+# defining the multiplot
 grid.arrange(RtPlot, ONSRtPlot, ncol = 2)
 dev.off()
 ```
@@ -551,7 +566,12 @@ dev.off()
 ![](Figures/RTPlot.png)
 
 ```{r initial values, echo=FALSE}
+## displaying the initial values
 cat("--- Initial Rt values ---\n")
 cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 ```
+
+------------------------------------------------------------------------
+
+# Appendix
