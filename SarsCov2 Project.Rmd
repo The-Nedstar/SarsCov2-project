@@ -454,7 +454,7 @@ Difference in time of rise was likely caused by the connections of Locations to 
 
 ### ii.
 
-The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occuring.
+The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occuring as there are fewer other strains in the pool to reduce the frequency of delta, or compete against it.
 
 The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occuring to lead to this discrepancy.
 
@@ -463,6 +463,10 @@ The data from our analysis supports the conclusion that the founder's effect is 
 # Question 5
 
 ## 1.
+
+Using PCR results is unlikely to give the true incidence. Not every test logged is a PCR test, not PCR test will be sequenced, and with a decent potential for false negatives the count recieved from this data will be far lower than what is actually occuring within the population.
+
+However, the proportion of strains being delta is probably far more accurate. Every strain will have an equal limitation to being sampled and so the proportion achieved is likely to be very representative. Because of this, by taking the more accurate daily count data of any strain which has a much larger sample size and multiply that by the proportion from the weekly data we are going to achieved a number that is most likely far more representative.
 
 ```{r preparing datasets for comparison of counts}
 ## loading daily data
@@ -525,7 +529,7 @@ grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
 
 ![Fig 7: Comparison of the weekly and daily datasets. a) frequencies from the weekly dataset multiplied by the count from the daily dataset. b) original counts from the weekly data. c) counts from the daily dataset. d) comparison of the two datasets using the data shown in (a), coloured by dataset.](Figures/DVWPlot.png)
 
-the data seems to perfectly match up but just for a short while??? so like small
+when showing the data side by side here, we show that with the modification the data lines perfectly up for the period in which delta had a near 1.0 frequency, showing the correct values. Wheras the count data from the weekly is substantially smaller at every point showing that it is an understimate of the true incidence.
 
 ## 2.
 
@@ -589,6 +593,8 @@ cat("--- Initial Rt values ---\n")
 cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 ```
+
+The initial Rt values are quite similar for both data sets, with the COG-UK being 1.644 and the ONS-CIS being 1.9154. Overall the data follows a similar trajectory with it usually being above 1 and having a large dip during August. The Daily data is a lot smoother overall and potentially is missing some of the intricacies of the ONS data.
 
 ------------------------------------------------------------------------
 
