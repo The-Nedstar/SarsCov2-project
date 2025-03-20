@@ -27,12 +27,14 @@ library(ggsci)
 source(here("Data", "Functions.R"))
 ```
 
+# Introduction
+
 # Question 1
 
 ## 1.
 
-```{r loading data}
-GenPerWeek <- read.csv(here("Data", "Genomes_per_week_in_England.csv"))
+```{r loading COG Dataset}
+CogGPW <- read.csv(here("Data", "Genomes_per_week_in_England.csv"))
 ```
 
 ## 2.
@@ -43,7 +45,7 @@ MajLin <- c("B.1.1.7", "B.1.617.2", "BA.1", "BA.2", "BA.2.75",
             "BA.4", "BA.5", "BA.5.3", "XBB", "Other")
 
 ## altering the values in the column to Other if not major
-GenPerWeek <- GenPerWeek %>% 
+CogGPW <- CogGPW %>% 
   mutate(lineage = case_when(
     lineage %in% MajLin ~ lineage, TRUE ~ "Other"), # changing values not in major lineages to "Other"
     lineage = factor(lineage, levels = MajLin),date = as.Date(date)) %>%  # converting the lineage into categorical factors and the date into a date
@@ -55,29 +57,29 @@ GenPerWeek <- GenPerWeek %>%
 
 ```{r visualation in a stacked area plot}
 ## using a self made function to create the stacked area plot
-stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$count,
-                  "total counts", GenPerWeek$lineage, 
+stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
+                  "total counts", CogGPW$lineage, 
                   "total counts of Covid lineages per week in England",
                   "TotalCountsAP.png")
 ```
 
 ![Fig 1:](Figures/TotalCountsAP.png)
 
-```{r Proportion graph}
+```{r plotting Proportion}
 ## calculation proportion values
 # creating a new dataframe which contains the total counts for each week
-TotCount <- aggregate(GenPerWeek$count, by = list(date = GenPerWeek$date), 
+TotCount <- aggregate(CogGPW$count, by = list(date = CogGPW$date), 
                       FUN = sum)
 # changing the column names so it can be added back
 colnames(TotCount) <- c("date", "total_count")
 # adding the total counts to each row from a set week
-GenPerWeek <- merge(GenPerWeek, TotCount, by = "date")
+CogGPW <- merge(CogGPW, TotCount, by = "date")
 # creating a new column with the calculated proportion
-GenPerWeek$proportion <- GenPerWeek$count / GenPerWeek$total_count
+CogGPW$proportion <- CogGPW$count / CogGPW$total_count
 
 ## using a self made function to create the stacked area plot
-stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$proportion,
-                  "proportion", GenPerWeek$lineage, 
+stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
+                  "proportion", CogGPW$lineage, 
                   "Proportion of Covid lineages per week in England", 
                   "ProportionAP.png")
 ```
@@ -88,7 +90,7 @@ stacked_area_plot(GenPerWeek, GenPerWeek$date, "time", GenPerWeek$proportion,
 
 ## 1.
 
-```{r Loading Data}
+```{r Loading ONS-CIS Data}
 ## downloading data
 ONSData <- read.csv("https://raw.githubusercontent.com/mg878/variant_fitness_practical/main/lineage_data.csv")
 ONSData$collection_date <- as.Date(ONSData$collection_date)
@@ -103,7 +105,7 @@ colnames(ONSSum) <- c("collection_date", "major_lineage", "lineage_count")
 
 ```
 
-```{r calculations}
+```{r calculating frequencies}
 ## totals
 # combining all values with the same collection date
 total_counts <- aggregate(ONSSum$lineage_count, 
@@ -136,7 +138,7 @@ ONSSumBin <- merge(ONSSumBin, total_counts, by = "collection_date_bin")
 ONSSumBin$lineage_frequency <- ONSSumBin$lineage_count / ONSSumBin$total_count
 ```
 
-```{r}
+```{r preparing data for lineage plots}
 ## Data wrangling
 # creating dataframe with only BA.2 and only the relevant columns
 ONSBA2 <- subset(ONSSumBin, major_lineage == "BA.2", 
@@ -149,7 +151,7 @@ ONSBA2c <- ONSBA2 %>% mutate(count = count * 6.2)
 ONSBA2c$Data <- as.factor("ONS-CIS")
   
 # creating dataframe with only BA.2 and only the relevant columns  
-COGBA2 <- subset(GenPerWeek, lineage == "BA.2",
+COGBA2 <- subset(CogGPW, lineage == "BA.2",
                  select = c("date", "count"))
 # creating a new dataframe with the same time period as the ONS-CIS data
 COGBA2c <- subset(COGBA2, date > as.Date("2021-12-18"))
@@ -158,8 +160,10 @@ COGBA2c$Data <- as.factor("COG-UK")
 
 # creating a combined dataset
 Both <- bind_rows(ONSBA2c, COGBA2c)
+```
 
-## Plotting
+```{r plotting lineages}
+## creating each plot
 # creating a plot for the ONS-CIS data using a self made function
 ONSPlot <- single_lineage_plot(ONSBA2, ONSBA2$date, "time", ONSBA2$count, "count", 
                                "c) Lineage tragectory for BA.2 (ONS-CIS)")
@@ -188,18 +192,18 @@ The most likely cause for this discrepancy is the difference in sampling techniq
 
 # Question 3
 
-```{r Data wrangling}
+```{r Data wrangling for logistic growth models}
 ## filtering by lineage and dates
 # Delta
-COGDeltaM <-  filter(GenPerWeek, lineage == "B.1.617.2", # Lineage
+COGDeltaM <-  filter(CogGPW, lineage == "B.1.617.2", # Lineage
                                 date >= as.Date("2021-03-27") & # date from
                                   date <= as.Date("2021-10-02")) # date until
 # BA.1
-COGBA1M <- filter(GenPerWeek, lineage == "BA.1", # Lineage
+COGBA1M <- filter(CogGPW, lineage == "BA.1", # Lineage
                                 date >= as.Date("2021-11-20") & # date from
                                   date <= as.Date("2022-01-15"))# date until
 # BA.2
-COGBA2M <- filter(GenPerWeek, lineage == "BA.2", # Lineage
+COGBA2M <- filter(CogGPW, lineage == "BA.2", # Lineage
                                 date >= as.Date("2021-12-25") & # date from
                                   date <= as.Date("2022-03-26"))# date until
 ```
@@ -269,7 +273,7 @@ COGBA2MPred1$date <- as.Date(as.Date(COGBA2MPred1$date)-273)
 COGCombMPred <- bind_rows(COGDeltaMPred,COGBA1MPred1,COGBA2MPred1)
 ```
 
-```{r plotting}
+```{r plotting logistic growth models}
 ## making plots
 # plotting Delta using a self made function
 COGDeltaMPredPlot <- single_lineage_plot(COGDeltaMPred, COGDeltaMPred$date,
@@ -414,7 +418,7 @@ for (Name in Names){
 #
 ```
 
-```{r group plot}
+```{r plotting Logistic growth by region}
 # setting the file parameters
 png(filename = here("Figures", "RegPlots.png"), height = 34, width = 34, units = "cm", res = 600)
   # defining positions
@@ -444,7 +448,7 @@ The data from our analysis supports the conclusion that the founder's effect is 
 
 ## 1.
 
-```{r preparing datasets}
+```{r preparing datasets for comparison of counts}
 ## loading daily data
 # loading from file
 DailyCases <- read.csv(here("Data", "daily-new-confirmed-covid-19-cases.csv"))
@@ -455,7 +459,7 @@ DailyCases$date <- as.Date(DailyCases$date)
 
 ## preparing ONS-CIS data
 # taking only Delta data and only necessary columns
-SimpleGPW <- subset(GenPerWeek, lineage == "B.1.617.2", select = c(date, count, proportion))
+SimpleGPW <- subset(CogGPW, lineage == "B.1.617.2", select = c(date, count, proportion))
 # altering the data to show each day independently
 SimpleGPW <- SimpleGPW %>%
   rowwise() %>%
@@ -482,7 +486,7 @@ SimpleGPW$Data <- as.factor("Weekly Data")
 DayVWeek <- bind_rows(DailyCases, SimpleGPW)
 ```
 
-```{r plotting}
+```{r plotting comparison of counts}
 ## Plotting
 # creating a plot for the ONS-CIS data using a self made function
 WeeklyPlot1 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time",
@@ -497,6 +501,7 @@ WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$
 # creating a plot with both datasets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
                                DayVWeek$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
@@ -508,7 +513,7 @@ the data seems to perfectly match up but just for a short while??? so like small
 
 ## 2.
 
-```{r Rt measurement}
+```{r Rt estimation}
 ## preparing data
 # subsetting data to only values from the correct period
 RtData <- subset(DailyCases, date >= as.Date("2021-04-23") &
@@ -524,34 +529,120 @@ RtResults <- estimate_R(incid = RtData, method = "parametric_si",
 ```
 
 ```{r ONS-CIS Rt from practical}
+## loading incidence data saved from the practical code
+# loading the data from the ONS-CIS
 ONSRtData <- read.csv(here("Data", "incidence_data_ONS.csv"))
+# selecting only the relevant data
 ONSRtData <- subset(ONSRtData, select = c(dates, I))
+# ensuring the dates are formatted correctly
 ONSRtData$dates <- as.Date(ONSRtData$dates)
 
+## estimating Rt for the ONS dataset
 ONSRtResults <- estimate_R(incid = ONSRtData, method = "parametric_si",
                         config = make_config(SerialInt))
 ```
 
-```{r Rt plot creation}
+```{r plotting Rt}
+## defining individual plots
+# creating the plot for the daily data
 RtPlot <- plot(RtResults, what = "R", legend = FALSE) +
   labs(title = expression("a) Time-varying reproduction number" ~ (R[t]) ~ 
                             "(Daily Data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
+# creating the plot for the ONS-CIS data
 ONSRtPlot <- plot(ONSRtResults, what = "R", legend = FALSE) +
   labs(title = expression("b) Time-varying reproduction number" ~ (R[t]) ~ 
                             "(ONS-CIS Data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
-png(filename = here("Figures", "RtPlot.png"), height = 10, width = 28, units = "cm", res = 400)
+
+## combining plots as a png
+# defining png parameters
+png(filename = here("Figures", "RtPlot.png"), height = 10, width = 28, units = "cm", res = 600)
+# defining the multiplot
 grid.arrange(RtPlot, ONSRtPlot, ncol = 2)
 dev.off()
 ```
 
 ![](Figures/RTPlot.png)
 
-```{r initial values, echo=FALSE}
+```{r displaying values initial values, echo=FALSE}
+## displaying the initial values
 cat("--- Initial Rt values ---\n")
 cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
+```
+
+------------------------------------------------------------------------
+
+# Appendix
+
+::: {#refs}
+:::
+
+## Contents of Functions.R
+
+```{r eval=FALSE, include=TRUE}
+###########################################
+# Functions for Sars Covid 19 assignment
+# author: anonymous
+###########################################
+
+###Logistic Growth
+logistic_growth <- function(t, s, f0) {
+  (f0 * exp(s * t)) / (1 + f0 * (exp(s * t) - 1)) # defining the logistic growth equation
+}
+
+### stacked area plot
+stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, File) {
+  ## creating the plot
+  temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis, fill = Fill)) +
+    geom_area() + # setting to area plot
+    scale_fill_jco() + # setting the palette
+    theme_bw() +
+    labs(x = Xtitle, y = Ytitle, title = Title)
+  ## saving as a png
+  png(filename = here("Figures", File), height = 10, width = 20, units = "cm", res = 400)
+  print(temp)
+  dev.off()
+}
+
+#### lineage plots
+### single
+single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
+  ## creating plot
+  temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis)) +
+    geom_line() + # line between points
+    geom_point() + # points on top of line
+    theme_bw() +
+    labs(x = Xtitle, y = Ytitle, title = Title)
+  ## return the plot for further modification rather than save as png
+  return(temp)
+}
+
+### double
+multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTitle, Title, LegPos) {
+  ## creating plot
+  temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
+                   colour = Colour)) +
+    geom_line() + # line between points
+    geom_point() + # points on top of line
+    scale_colour_jco() + # setting palette
+    theme_bw() +
+    labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +
+    theme(legend.position = LegPos, # defining the legend position
+          legend.background = element_rect(fill = "white", color = "black"))
+  ## return the plot for further modification rather than save as png
+  return(temp)
+}
+
+### combining plots into a grid
+grid_plot <- function(Filename, Plot1, Plot2, Plot3, Plot4){
+  ## saving as png
+  png(filename = here("Figures", Filename), height = 20, width = 25, units = "cm", res = 600)
+  # defining positions
+  grid.arrange(Plot1, Plot2, Plot3, Plot4, ncol = 2)
+  dev.off()
+}
 ```

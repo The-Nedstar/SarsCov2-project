@@ -445,7 +445,7 @@ library(incidence)
 
 # Specify start and end dates
 # The input incidence data for EpiEstim cannot include missing dates and case counts 
-start_date <- as.Date("2021-06-01")
+start_date <- as.Date("2021-04-23")
 end_date <- as.Date("2021-11-01")
 
 # Filter delta_daily_counts for the specified date range
