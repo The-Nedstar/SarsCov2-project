@@ -583,7 +583,7 @@ cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 
 ## Contents of Functions.R
 
-```{r eval=FALSE, include=TRUE}
+```{r functions, eval=FALSE, include=TRUE}
 ###########################################
 # Functions for Sars Covid 19 assignment
 # author: anonymous
