@@ -15,7 +15,7 @@ stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, F
     geom_area() + # setting to area plot
     scale_fill_jco() + # setting the palette
     theme_bw() +
-    labs(x = Xtitle, y = Ytitle, title = Title)
+    labs(x = Xtitle, y = Ytitle, title = Title, fill = "Lineage")
   ## saving as a png
   png(filename = here("Figures", File), height = 10, width = 20, units = "cm", res = 400)
   print(temp)
@@ -28,7 +28,7 @@ single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis)) +
     geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points on top of lines
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title)
   ## return the plot for further modification rather than save as png
@@ -41,10 +41,10 @@ multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTi
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
                    colour = Colour)) +
     geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points on top of lines
     scale_colour_jco() + # setting palette
     theme_bw() +
-    labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +
+    labs(x = Xtitle, y = Ytitle, title = Title, colour = ColTitle) +
     theme(legend.position = LegPos, # defining the legend position
           legend.background = element_rect(fill = "white", color = "black"))
   ## return the plot for further modification rather than save as png

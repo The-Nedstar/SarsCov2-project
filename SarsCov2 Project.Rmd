@@ -29,13 +29,21 @@ source(here("Data", "Functions.R"))
 
 # Introduction
 
+In this document, we take a look at three data-sets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 variants as well as compare the differences between data-sets. There are four data-sets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from collected Positive PCR tests which have been sequenced to identify the lineage present. *daily-new-confirmed-covid-19-cases.csv* which contains daily total case counts for all strains of covid collectively, taken from a wider variety of sources and is a more representative data-set of total cases, but doesn't include any other information. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to each other when it comes to the Delta strain. The final data-set comes from the Office for National Statistics Corona-virus Infection Survey (ONS-CIS) [@coronavi]. This data-set, like the weekly COG-UK data-set, contains many individual cases of corona-virus and which lineage they are part of. However instead of using positive PCR tests, it uses random samples from various households, and so could also pick up asymptomatic and untested cases.
+
+All of these files are available on an anonymised github, under the "Data" folder [@the-nedstar2025]. This repository also contains all of the figures as .png files and the renv folder for this to be run with the all of the correct packages installed. Inside the "Data" folder also contains the file *Functions.R* which contains all of the self made functions used in this analysis, the entire contents of this file is also present at the end of the document in the Appendix.
+
+Link for anonymised github: <https://github.com/The-Nedstar/SarsCov2-project>
+
 ------------------------------------------------------------------------
 
 # Question 1
 
+Firstly we look exclusively at the COG-UK *Genomes_per_week_in_England.csv* data-set to investigate the dynamics of each lineage overtime in England.
+
 ## 1.
 
-```{r loading COG Dataset}
+```{r loading COG data-set}
 CogGPW <- read.csv(here("Data", "Genomes_per_week_in_England.csv"))
 ```
 
@@ -57,6 +65,8 @@ CogGPW <- CogGPW %>%
 
 ## 3.
 
+Here we used stacked area plots to view the dynamics of Covid prevalence and the abundance of various lineages using the COG-UK weekly data-set.
+
 ```{r visualation in a stacked area plot}
 ## using a self made function to create the stacked area plot
 stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
@@ -65,7 +75,13 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
                   "TotalCountsAP.png")
 ```
 
-![Fig 1:](Figures/TotalCountsAP.png)
+------------------------------------------------------------------------
+
+![Fig 1: Stacked area plot showing the total count of Covid-19 infections overtime as from the COG-UK weekly data-set. Coloured based on the identified lineage.](Figures/TotalCountsAP.png)
+
+------------------------------------------------------------------------
+
+In this figure we can see each of the lineages taking over from each other in succession and how the total count of Covid-19 cases changed overtime, with its main peak being at the height of Delta when BA.1 started to increase in prevalence.
 
 ```{r plotting Proportion}
 ## calculation proportion values
@@ -86,13 +102,21 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
                   "ProportionAP.png")
 ```
 
-![Fig 2:](Figures/ProportionAP.png)
+------------------------------------------------------------------------
+
+![Fig 2: Stacked area plot showing the proportion of Covid-19 infections made up by each lineage as from the COG-UK weekly data-set. Coloured based on the identified lineage.s](Figures/ProportionAP.png)
+
+------------------------------------------------------------------------
+
+This plot shows more clearly the competition between lineages and each one taking over in succession. The dynamic shown is that of cyclic competitive exclusion where new lineages out-compete other lineages to the point where they entirely take over and reach a proportion of \~1. Then, a new lineage evolves with a competitive advantage and the proportion drops back to 0 as this new lineage reaches fixation.
 
 ------------------------------------------------------------------------
 
 # Question 2
 
 ## 1.
+
+Here we calculate and display the lineage trajectory for BA.2 using both the COG-UK weekly data-set and the ONS-CIS data-set.
 
 ```{r Loading ONS-CIS Data}
 ## downloading data
@@ -134,9 +158,9 @@ ONSSumBin <- aggregate(lineage_count ~ collection_date_bin + major_lineage,
 # Calculate total counts within each bin
 total_counts <- aggregate(lineage_count ~ collection_date_bin,
                           data = ONSSumBin,FUN = sum)
-#change to fit with original dataframe
+# change to fit with original dataframe
 colnames(total_counts) <- c("collection_date_bin", "total_count") 
-# add back to dataset
+# add back to data-set
 ONSSumBin <- merge(ONSSumBin, total_counts, by = "collection_date_bin")
 # Recalculate frequencies
 ONSSumBin$lineage_frequency <- ONSSumBin$lineage_count / ONSSumBin$total_count
@@ -162,7 +186,7 @@ COGBA2c <- subset(COGBA2, date > as.Date("2021-12-18"))
 # adding a factor column to identify these values as COG-UK derived
 COGBA2c$Data <- as.factor("COG-UK")
 
-# creating a combined dataset
+# creating a combined data-set
 Both <- bind_rows(ONSBA2c, COGBA2c)
 ```
 
@@ -178,25 +202,31 @@ COGPlot <- single_lineage_plot(COGBA2, COGBA2$date, "time", COGBA2$count, "count
 COGPlot2 <- single_lineage_plot(COGBA2c, COGBA2c$date, "time", COGBA2c$count,
                                "count", 
                                "a) Cropped Lineage tragectory for BA.2 (COG-UK)")
-# creating a plot with both datasets shown together
+# creating a plot with both data-sets shown together
 BothPlot <- multi_lineage_plot(Both, Both$date, "time",Both$count, "normalised Count", 
-                               Both$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+                               Both$Data, "data-set", "d) Combined plot", c(0.84, 0.80))
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 ```
 
-![Fig 3:](Figures/BA2LinPlot.png)
+------------------------------------------------------------------------
+
+![Fig 3: Comparison of lineage trajectories for the BA.2 lineage from the COG-UK and ONS-CIS data-set. a) COG-UK data cropped to the same time-points as the ONS-CIS data. b) all of the COG-UK data. c) all of the ONS-CIS data. d) both data-sets displayed together, the counts from the ONS-CIS data-set has been multiplied by 6.2 for ease of comparison, coloured by data-set.](Figures/BA2LinPlot.png)
+
+------------------------------------------------------------------------
 
 ## 2.
 
-Both datasets show very similar trajectories. When the count is increasing they are almost identical, starting at about the same time and growing at similar rates. They both peak at about the same time as well. However, the decrease in count after the peak is different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
+Both data-sets show very similar trajectories, with only slight changes between data-sets. When the count is increasing, they differ a bit in the middle, but at the starts and ends they are almost identical, starting at about the same time and growing at similar rates overall. They both appear to peak at very similar timesas well, with the ONS plot being only slightly delayed, and hard to gauge as the plot is missing its true peak. However, the decrease in count after the peak is particularly different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
 
-The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, wherase ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into it's cycle and lead to the delayed drop that we see.
+The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, while ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into its cycle and lead to the delayed drop that we see. On top of this, as more people had been introduced to the strain it was likely that they had had it before, and could be reintroduced to the virus without infection due to their immune memory of the virus, in this situation they may still test positive for the presence of the virus, but without any symptoms are unlikely to go and get tested.
 
 ------------------------------------------------------------------------
 
 # Question 3
+
+In this section we use the COG-UK weekly data-set to compare the fixation rates and selective advantage of 3 covid lineages; Delta (B.1.617.2), BA.1 and BA.2; using logistic growth models.
 
 ```{r Data wrangling for logistic growth models}
 ## filtering by lineage and dates
@@ -248,7 +278,7 @@ COGBA1MPred <- data.frame(date = COGBA1MDates,
                                         coef(COGBA1MFit)["f0"]))
 # Labelling values as the BA.1 strain
 COGBA1MPred$Data <- as.factor("BA.1")
-# creating a new dataset
+# creating a new data-set
 COGBA1MPred1 <- COGBA1MPred
 # setting the dates to that of the Delta strain
 COGBA1MPred1$date <- as.Date(as.Date(COGBA1MPred1$date)-238)
@@ -270,12 +300,12 @@ COGBA2MPred <- data.frame(date = COGBA2MDates,
                                         coef(COGBA2MFit)["f0"]))
 # Labelling values as the Delta strain
 COGBA2MPred$Data <- as.factor("BA.2")
-# creating a new dataset
+# creating a new data-set
 COGBA2MPred1 <- COGBA2MPred
 # setting the dates to that of the Delta strain
 COGBA2MPred1$date <- as.Date(as.Date(COGBA2MPred1$date)-273)
 
-## combining all predictions into one dataset
+## combining all predictions into one data-set
 COGCombMPred <- bind_rows(COGDeltaMPred,COGBA1MPred1,COGBA2MPred1)
 ```
 
@@ -302,13 +332,13 @@ COGBA2MPredPlot <- single_lineage_plot(COGBA2MPred, COGBA2MPred$date,
                                          "time",
                                          COGBA2MPred$predicted_frequency,
                                          "predicted frequency", 
-                                         paste("c) predicted BA.1 frequency, s =",
+                                         paste("c) predicted BA.2 frequency, s =",
                                                round(coef(COGBA2MFit)["s"],4)))
 
-# creating a plot with all datasets shown together
+# creating a plot with all data-sets shown together
 COGCombMPredPlot <- multi_lineage_plot(COGCombMPred, COGCombMPred$date, "time",
                                        COGCombMPred$predicted_frequency, "predicted frequency",
-                                       COGCombMPred$Data, "lineage", "d) Combined plot", 
+                                       COGCombMPred$Data, "Lineage", "d) Combined plot", 
                                        c(0.88, 0.23))
 ## combinging and saving plot
 grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPredPlot, 
@@ -316,17 +346,23 @@ grid_plot("COGCombPredPlot.png", COGDeltaMPredPlot, COGBA1MPredPlot, COGBA2MPred
 
 ```
 
-![](Figures/COGCombPredPlot.png)
+------------------------------------------------------------------------
 
-BA.1 reached fixation the fastest and had the highest selective advantage at 2.597, Delta was then second with s = 0.1268 and lastly BA.2 with s = 0.1044.
+![Fig 4: Comparison of logistic growth models for the lineages, Delta (B.1.617.2), BA.1 and BA.2 a-c) logistic model for Delta, BA.1 and BA.2 respectively. d) combination of the output of all 3 models, all set to start from the same date for ease of comparison, Coloured by strain](Figures/COGCombPredPlot.png)
+
+------------------------------------------------------------------------
+
+BA.1 reached fixation the fastest and had the highest selective advantage at 2.597, Delta was then second with s = 0.1268 and lastly BA.2 with s = 0.1044. This suggests that BA.1 had a higher selective advantage over Delta, that Delta did over Alpha, and that the advantage that BA.2 had over BA.1 was even lower still.
 
 ------------------------------------------------------------------------
 
 # Question 4
 
+In this section we use the COG-UK *delta-d2.rds* data-set to compare the frequencies of Delta between regions of England.
+
 ## 1.
 
-```{r Loading Delta dataset}
+```{r Loading Delta data-set}
 ## loading the data
 DeltaD2 <- readRDS(here("Data", "delta-d2.rds"))
 # ensuring there are no values without regions
@@ -349,17 +385,25 @@ DeltaD2Freq <- DeltaD2 %>%
 ## plotting delta frequencies using a self made plot
 DeltaByReg <- multi_lineage_plot(DeltaD2Freq, DeltaD2Freq$date, "time", DeltaD2Freq$frequency,
                                  "Frequency", DeltaD2Freq$phecname, "region", 
-                                 "Delta Frequency per region", c(0.8835,0.4))
+                                 "Delta Frequency per region", c(0.8845,0.325))
 # saving to png seperately
-png(filename = here("Figures", "DeltaByReg.png"), height = 10, width = 20, 
+png(filename = here("Figures", "DeltaByReg.png"), height = 13, width = 24, 
     units = "cm", res = 400)
 print(DeltaByReg)
 dev.off()
 ```
 
-![](Figures/DeltaByReg.png)
+------------------------------------------------------------------------
+
+![Fig 5: plot showing the Frequency of Delta per Region of England overtime. Each datapoint shows the proportion of covid cases testing positive for the Delta strain in that specific region, coloured by region.](Figures/DeltaByReg.png)
+
+------------------------------------------------------------------------
+
+The graph shows a similar growth between all of the regions, with some starting sooner and some happening at different speeds to each other.
 
 ### ii.
+
+This next step uses an iterative process to fit a logistic growth model to each of these regions individually, for the same time frames and using the same starting parameters for optimum comparability.
 
 ```{r Loop for creating each model and plot}
 ## setting up data and parameters for loop
@@ -403,7 +447,7 @@ for (Name in Names){
   Temp$Data <- as.factor("real")
   # labelling each value from the predicted data
   TempPred$Data <- as.factor("predicted")
-  # combining both datasets into one
+  # combining both data-sets into one
   TempComb <- bind_rows(Temp, TempPred)
   
   ## plotting
@@ -434,7 +478,11 @@ png(filename = here("Figures", "RegPlots.png"), height = 34, width = 34, units =
   dev.off()
 ```
 
-![](Figures/BigBOI.png)
+------------------------------------------------------------------------
+
+![Fig 6: combined plot of the frequencies of Delta at each of the 9 regions as calculated from the delta-d2.rds data-set and the frequencies predicted from a logisitic growth model. a-i) plot for each independent region showing the original data and frequencies predicted from the logistic growth model in different colours.](Figures/RegPlots.png)
+
+------------------------------------------------------------------------
 
 ## 3.
 
@@ -444,13 +492,13 @@ The West Midlands had the fastest outbreak with an S of 0.1751.
 
 The North West had the earliest rise in frequencies with an F0 of 0.537.
 
-Difference in time of rise was likely caused by the connections of Locations to each other and do locations outside of England. Locations with large airports for instance are likely candidates for entry of a new strain into the country. Speed of outbreak will be determined by many conditions, including both the movement of people, but also the sucseptibility of the population. Potentially there are greater proportions of young and elderly people in the West Midlands, or a greater proportion of people who had not been exposed to any form of Covid before.
+Difference in time of rise was likely caused by the connections of Locations to each other and do locations outside of England. Locations with large airports for instance, are likely candidates for entry of a new strain into the country. Speed of outbreak will be determined by many conditions, including both the movement of people, but also the susceptibility of the population. Potentially there are greater proportions of young and elderly people in the West Midlands, or a greater proportion of people who had not been exposed to any form of covid before.
 
 ### ii.
 
-The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occuring.
+The founder's effect is when a small selection of the total disease population enters a new separated host population, such as one in, isolated geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occurring as there are fewer other strains in the pool to reduce the frequency of delta, or compete against it.
 
-The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occuring to lead to this discrepancy.
+The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occurring to lead to this discrepancy.
 
 ------------------------------------------------------------------------
 
@@ -458,11 +506,15 @@ The data from our analysis supports the conclusion that the founder's effect is 
 
 ## 1.
 
-```{r preparing datasets for comparison of counts}
+Using PCR results is unlikely to give the true incidence. Not every test logged is a PCR test, not PCR test will be sequenced, and with a decent potential for false negatives the count received from this data will be far lower than what is actually occurring within the population. Due to this the count is going to massively underestimate the true incidence.
+
+However, the proportion of strains being delta is probably far more accurate. Every strain will have an equal limitation to being sampled and so the proportion achieved is likely to be very representative. Because of this, by taking the more accurate daily count data of any strain which has a much larger sample size and multiply that by the proportion from the weekly data we are going to achieved a number that is most likely far more representative. The daily count data is still likely to underestimate the true incidence as there will be many missed cases, but it is likely to be substantially more accurate.
+
+```{r preparing data-sets for comparison of counts}
 ## loading daily data
 # loading from file
 DailyCases <- read.csv(here("Data", "daily-new-confirmed-covid-19-cases.csv"))
-# changing the column names to match other datasets
+# changing the column names to match other data-sets
 colnames(DailyCases) <- c("date", "count")
 # ensuing the date is formatted as a date
 DailyCases$date <- as.Date(DailyCases$date)
@@ -482,44 +534,49 @@ DailyCases <- subset(DailyCases, date >= as.Date(min(SimpleGPW$date)) &
                            date <= as.Date(max(SimpleGPW$date)))
 
 ## calculating modified count
-# storing the original count seperately
-SimpleGPW$og_count <- SimpleGPW$count
-# replacing the count value with the modified version
-SimpleGPW$count <- SimpleGPW$proportion * DailyCases$count
+SimpleGPW1 <- SimpleGPW %>% 
+  mutate(count = proportion * DailyCases$count)
 
-## combining datasets
+## combining data-sets
 # labelling daily case data
 DailyCases$Data <- as.factor("Daily Data")
 # labelling weekly case data
-SimpleGPW$Data <- as.factor("Weekly Data")
-# created a dataset combining both datasets
-DayVWeek <- bind_rows(DailyCases, SimpleGPW)
+SimpleGPW$Data <- as.factor("Weekly Data original")
+# labelling modified weekly case data
+SimpleGPW1$Data <- as.factor("Weekly Data modified")
+
+# created a data-set combining all data-sets
+DayVWeek <- bind_rows(DailyCases, SimpleGPW1, SimpleGPW)
 ```
 
 ```{r plotting comparison of counts}
 ## Plotting
-# creating a plot for the ONS-CIS data using a self made function
-WeeklyPlot1 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time",
+# creating a plot for the modified weekly data
+WeeklyPlot1 <- single_lineage_plot(SimpleGPW1, SimpleGPW$date, "time",
                                   SimpleGPW$count, "count", "a) weekly cases data (modified)")
-# creating a plot for the COG-UK data using a self made function
-DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases$count, 
-                                 "count", "c) daily cases data")
-# creating a plot for the cropped COG-UK data using a self made function
-WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$og_count,
+# creating a plot for original weekly data
+WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$count,
                                "count", 
                                "b) Weekly cases data (original)")
-# creating a plot with both datasets shown together
+# creating a plot for the daily data
+DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases$count, 
+                                 "count", "c) daily cases data")
+# creating a plot with both data-sets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
-                               DayVWeek$Data, "Dataset", "d) Combined plot", c(0.86, 0.80))
+                               DayVWeek$Data, "data-set", "d) Combined plot", c(0.23, 0.79))
 
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
 ```
 
-![](Figures/DVWPlot.png)
+------------------------------------------------------------------------
 
-the data seems to perfectly match up but just for a short while??? so like small
+![Fig 7: Comparison of the weekly and daily data-sets. a) frequencies from the weekly data-set multiplied by the count from the daily data-set. b) original counts from the weekly data. c) counts from the daily data-set. d) comparison of the two data-sets using the data shown in (a), coloured by data-set.](Figures/DVWPlot.png)
+
+------------------------------------------------------------------------
+
+When directly comparing the data, we show that with the modification the data lines perfectly up for the period in which delta had a near 1.0 frequency, Whereas the count data from the weekly is substantially lower for the majority of it. As the frequency is \~1 the number of delta cases should be almost equal to the number of total covid cases. So the original data substantially underestimates the prevalence and therefore incidence of delta.
 
 ## 2.
 
@@ -547,7 +604,7 @@ ONSRtData <- subset(ONSRtData, select = c(dates, I))
 # ensuring the dates are formatted correctly
 ONSRtData$dates <- as.Date(ONSRtData$dates)
 
-## estimating Rt for the ONS dataset
+## estimating Rt for the ONS data-set
 ONSRtResults <- estimate_R(incid = ONSRtData, method = "parametric_si",
                         config = make_config(SerialInt))
 ```
@@ -557,7 +614,7 @@ ONSRtResults <- estimate_R(incid = ONSRtData, method = "parametric_si",
 # creating the plot for the daily data
 RtPlot <- plot(RtResults, what = "R", legend = FALSE) +
   labs(title = expression("a) Time-varying reproduction number" ~ (R[t]) ~ 
-                            "(Daily Data)"),
+                            "(COG-UK data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
 # creating the plot for the ONS-CIS data
@@ -575,7 +632,11 @@ grid.arrange(RtPlot, ONSRtPlot, ncol = 2)
 dev.off()
 ```
 
-![](Figures/RTPlot.png)
+------------------------------------------------------------------------
+
+![Fig 8: Comparison of the reproduction number estimate overtime using the Daily COG-UK data (a) and the ONS-CIS Data (b).](Figures/RTPlot.png)
+
+------------------------------------------------------------------------
 
 ```{r displaying values initial values, echo=FALSE}
 ## displaying the initial values
@@ -584,16 +645,22 @@ cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 ```
 
+The initial Rt values are quite similar for both data sets, with the COG-UK being 1.644 and the ONS-CIS being 1.9154. Overall the data follows a similar trajectory with it usually being above 1 and having a large dip during August. The Daily data is a lot smoother overall and potentially is missing some of the intricacies of the ONS data, however the error bars on the ONS-CIS data are substantially higher suggesting that the data could be less accurate.
+
 ------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 
 # Appendix
 
+## References
+
 ::: {#refs}
 :::
 
 ## Contents of Functions.R
+
+This file is can also be found on the anonymised github page [@the-nedstar2025].
 
 ```{r functions, eval=FALSE, include=TRUE}
 ###########################################
@@ -613,7 +680,7 @@ stacked_area_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Fill, Title, F
     geom_area() + # setting to area plot
     scale_fill_jco() + # setting the palette
     theme_bw() +
-    labs(x = Xtitle, y = Ytitle, title = Title)
+    labs(x = Xtitle, y = Ytitle, title = Title, fill = "Lineage")
   ## saving as a png
   png(filename = here("Figures", File), height = 10, width = 20, units = "cm", res = 400)
   print(temp)
@@ -626,7 +693,7 @@ single_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Title) {
   ## creating plot
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis)) +
     geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points on top of lines
     theme_bw() +
     labs(x = Xtitle, y = Ytitle, title = Title)
   ## return the plot for further modification rather than save as png
@@ -639,10 +706,10 @@ multi_lineage_plot <- function(Data, Xaxis, Xtitle, Yaxis, Ytitle, Colour, ColTi
   temp <- ggplot(Data, aes(x = Xaxis, y = Yaxis,
                    colour = Colour)) +
     geom_line() + # line between points
-    geom_point() + # points on top of line
+    geom_point() + # points on top of lines
     scale_colour_jco() + # setting palette
     theme_bw() +
-    labs(x = Xtitle, y = Ytitle, title = Title, Colour = ColTitle) +
+    labs(x = Xtitle, y = Ytitle, title = Title, colour = ColTitle) +
     theme(legend.position = LegPos, # defining the legend position
           legend.background = element_rect(fill = "white", color = "black"))
   ## return the plot for further modification rather than save as png
