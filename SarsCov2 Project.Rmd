@@ -29,7 +29,7 @@ source(here("Data", "Functions.R"))
 
 # Introduction
 
-In this document, we take a look at three data-sets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 variants as well as how the data-sets differ from each other. There are four data-sets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from collected Positive PCR tests which have been sequenced to identify the lineage present. *daily-new-confirmed-covid-19-cases.csv* which contains daily case counts for all strains of covid simultaneously, taken from a wider variety of sources and is a more representative data-set of total cases, but doesn't include any other information. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to each other when it comes to the Delta strain. The final data-set comes from the Office for National Statistics Corona-virus Infection Survey (ONS-CIS) [@coronavi]. This data-set like the contains many individual cases of corona-virus and which lineage it is apart of, however instead of using positive PCR tests it is a random sample made of various households and so could also pick up asymptomatic and untested cases.
+In this document, we take a look at three data-sets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 variants as well as how the data-sets differ from each other. There are four data-sets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from collected Positive PCR tests which have been sequenced to identify the lineage present. *daily-new-confirmed-covid-19-cases.csv* which contains daily case counts for all strains of covid simultaneously, taken from a wider variety of sources and is a more representative data-set of total cases, but doesn't include any other information. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to each other when it comes to the Delta strain. The final data-set comes from the Office for National Statistics Corona-virus Infection Survey (ONS-CIS) [@coronavi]. This data-set like the contains many individual cases of corona-virus and which lineage they are part of. However instead of using positive PCR tests, it uses random samples from various households, and so could also pick up asymptomatic and untested cases.
 
 All of these files are available on an anonymised github, under the "Data" folder [@the-nedstar2025]. This repository also contains all of the figures as .png files and the renv folder for this to be run with the all of the correct packages installed. Inside the "Data" folder also contains the file *Functions.R* which contains all of the self made functions used in this analysis, the entire contents of this file is also present at the end of the document in the Appendix.
 
@@ -79,7 +79,7 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$count,
 
 ------------------------------------------------------------------------
 
-In this figure we can see each of the lineages taking over from each other in succession and how the total count of Covid-19 cases changed overtime, with it's main peak being at the height of Delta when BA.1 started to increase in prevalence.
+In this figure we can see each of the lineages taking over from each other in succession and how the total count of Covid-19 cases changed overtime, with its main peak being at the height of Delta when BA.1 started to increase in prevalence.
 
 ```{r plotting Proportion}
 ## calculation proportion values
@@ -106,7 +106,7 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
 
 ------------------------------------------------------------------------
 
-This plot shows more clearly the competition between lineages and each one taking over in succession. The dynamic shown is that of cyclic competitive exclusion where new lineages out-compete other lineages to the point where they entirely take over and reach a proportion of \~1. Until then a new lineage evolves with a competitive advantage and the proportion drops back to 0 as this new lineage reaches fixation.
+This plot shows more clearly the competition between lineages and each one taking over in succession. The dynamic shown is that of cyclic competitive exclusion where new lineages out-compete other lineages to the point where they entirely take over and reach a proportion of \~1. Then, a new lineage evolves with a competitive advantage and the proportion drops back to 0 as this new lineage reaches fixation.
 
 # Question 2
 
@@ -214,9 +214,9 @@ grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 
 ## 2.
 
-Both data-sets show very similar trajectories, with only slight changes between datasets. When the count is increasing they differ a bit in the middle, but at the starts and ends they are almost identical, starting at about the same time and growing at similar rates overall. They both appear to peak at very similar timesas well, with the ONS plot being only slightly delayed, and hard to guage as the plot is missing it's true peak. However, the decrease in count after the peak is particularly different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
+Both data-sets show very similar trajectories, with only slight changes between datasets. When the count is increasing, they differ a bit in the middle, but at the starts and ends they are almost identical, starting at about the same time and growing at similar rates overall. They both appear to peak at very similar timesas well, with the ONS plot being only slightly delayed, and hard to guage as the plot is missing its true peak. However, the decrease in count after the peak is particularly different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
 
-The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, wherase ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into it's cycle and lead to the delayed drop that we see. On top of this, as more people had been introduced to the strain it was likely that they had had it before, and could be reintroduced to the virus without infection due to their immune memory of the virus, in this situation they may still test positive for the presence of the virus, but without any symptoms are unlikely to go and get tested.
+The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, while ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into its cycle and lead to the delayed drop that we see. On top of this, as more people had been introduced to the strain it was likely that they had had it before, and could be reintroduced to the virus without infection due to their immune memory of the virus, in this situation they may still test positive for the presence of the virus, but without any symptoms are unlikely to go and get tested.
 
 ------------------------------------------------------------------------
 
@@ -395,7 +395,7 @@ dev.off()
 
 ------------------------------------------------------------------------
 
-The Graph shows a similar growth between all of the regions, with some starting sooner and some happening at different speeds to eachother.
+The graph shows a similar growth between all of the regions, with some starting sooner and some happening at different speeds to each other.
 
 ### ii.
 
@@ -488,13 +488,13 @@ The West Midlands had the fastest outbreak with an S of 0.1751.
 
 The North West had the earliest rise in frequencies with an F0 of 0.537.
 
-Difference in time of rise was likely caused by the connections of Locations to each other and do locations outside of England. Locations with large airports for instance are likely candidates for entry of a new strain into the country. Speed of outbreak will be determined by many conditions, including both the movement of people, but also the sucseptibility of the population. Potentially there are greater proportions of young and elderly people in the West Midlands, or a greater proportion of people who had not been exposed to any form of Covid before.
+Difference in time of rise was likely caused by the connections of Locations to each other and do locations outside of England. Locations with large airports for instance, are likely candidates for entry of a new strain into the country. Speed of outbreak will be determined by many conditions, including both the movement of people, but also the susceptibility of the population. Potentially there are greater proportions of young and elderly people in the West Midlands, or a greater proportion of people who had not been exposed to any form of covid before.
 
 ### ii.
 
-The founder's effect is when a small selection of the total disease population enters a new separated host population, such as a geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occuring as there are fewer other strains in the pool to reduce the frequency of delta, or compete against it.
+The founder's effect is when a small selection of the total disease population enters a new separated host population, such as one in, isolated geographical area. This small selection has only a fraction of the genetic diversity of the larger population and so all people infected by it will be infected by genetically similar strains. When using Logistic growth models this can lead to an increased S compared to situations where the founder's effect is not occurring as there are fewer other strains in the pool to reduce the frequency of delta, or compete against it.
 
-The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occuring to lead to this discrepancy.
+The data from our analysis supports the conclusion that the founder's effect is leading to differences in growth across different regions, we see a large variety in S values from 0.9 to 1.75 (almost a 2 fold difference) meaning that the rate of growth is almost twice as fast in some areas compared to others. This is good evidence that a founder's effect style interaction is occurring to lead to this discrepancy.
 
 ------------------------------------------------------------------------
 
@@ -502,9 +502,9 @@ The data from our analysis supports the conclusion that the founder's effect is 
 
 ## 1.
 
-Using PCR results is unlikely to give the true incidence. Not every test logged is a PCR test, not PCR test will be sequenced, and with a decent potential for false negatives the count recieved from this data will be far lower than what is actually occuring within the population.
+Using PCR results is unlikely to give the true incidence. Not every test logged is a PCR test, not PCR test will be sequenced, and with a decent potential for false negatives the count received from this data will be far lower than what is actually occurring within the population. Due to this the count is going to massively underestimate the true incidence.
 
-However, the proportion of strains being delta is probably far more accurate. Every strain will have an equal limitation to being sampled and so the proportion achieved is likely to be very representative. Because of this, by taking the more accurate daily count data of any strain which has a much larger sample size and multiply that by the proportion from the weekly data we are going to achieved a number that is most likely far more representative.
+However, the proportion of strains being delta is probably far more accurate. Every strain will have an equal limitation to being sampled and so the proportion achieved is likely to be very representative. Because of this, by taking the more accurate daily count data of any strain which has a much larger sample size and multiply that by the proportion from the weekly data we are going to achieved a number that is most likely far more representative. The daily count data is still likely to underestimate the true incidence as there will be many missed cases, but it is likely to be substantially more accurate.
 
 ```{r preparing data-sets for comparison of counts}
 ## loading daily data
@@ -530,32 +530,33 @@ DailyCases <- subset(DailyCases, date >= as.Date(min(SimpleGPW$date)) &
                            date <= as.Date(max(SimpleGPW$date)))
 
 ## calculating modified count
-# storing the original count seperately
-SimpleGPW$og_count <- SimpleGPW$count
-# replacing the count value with the modified version
-SimpleGPW$count <- SimpleGPW$proportion * DailyCases$count
+SimpleGPW1 <- SimpleGPW %>% 
+  mutate(count = proportion * DailyCases$count)
 
 ## combining data-sets
 # labelling daily case data
 DailyCases$Data <- as.factor("Daily Data")
 # labelling weekly case data
-SimpleGPW$Data <- as.factor("Weekly Data")
-# created a data-set combining both data-sets
-DayVWeek <- bind_rows(DailyCases, SimpleGPW)
+SimpleGPW$Data <- as.factor("Weekly Data original")
+# labelling modified weekly case data
+SimpleGPW1$Data <- as.factor("Weekly Data modified")
+
+# created a data-set combining all data-sets
+DayVWeek <- bind_rows(DailyCases, SimpleGPW1, SimpleGPW)
 ```
 
 ```{r plotting comparison of counts}
 ## Plotting
-# creating a plot for the ONS-CIS data using a self made function
-WeeklyPlot1 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time",
+# creating a plot for the modified weekly data
+WeeklyPlot1 <- single_lineage_plot(SimpleGPW1, SimpleGPW$date, "time",
                                   SimpleGPW$count, "count", "a) weekly cases data (modified)")
-# creating a plot for the COG-UK data using a self made function
-DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases$count, 
-                                 "count", "c) daily cases data")
-# creating a plot for the cropped COG-UK data using a self made function
-WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$og_count,
+# creating a plot for original weekly data
+WeeklyPlot2 <- single_lineage_plot(SimpleGPW, SimpleGPW$date, "time", SimpleGPW$count,
                                "count", 
                                "b) Weekly cases data (original)")
+# creating a plot for the daily data
+DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases$count, 
+                                 "count", "c) daily cases data")
 # creating a plot with both data-sets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
                                DayVWeek$Data, "data-set", "d) Combined plot", c(0.80, 0.80))
@@ -565,9 +566,13 @@ DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "n
 grid_plot("DVWPlot.png", WeeklyPlot1, WeeklyPlot2, DailyPlot, DVWPlot)
 ```
 
+------------------------------------------------------------------------
+
 ![Fig 7: Comparison of the weekly and daily data-sets. a) frequencies from the weekly data-set multiplied by the count from the daily data-set. b) original counts from the weekly data. c) counts from the daily data-set. d) comparison of the two data-sets using the data shown in (a), coloured by data-set.](Figures/DVWPlot.png)
 
-when showing the data side by side here, we show that with the modification the data lines perfectly up for the period in which delta had a near 1.0 frequency, showing the correct values. Wheras the count data from the weekly is substantially smaller at every point showing that it is an understimate of the true incidence.
+------------------------------------------------------------------------
+
+When directly comparing the data, we show that with the modification the data lines perfectly up for the period in which delta had a near 1.0 frequency, Whereas the count data from the weekly is substantially lower for the majority of it. As the frequency is \~1 the number of delta cases should be almost equal to the number of total covid cases. So the original data substantially underestimates the prevalence and therefore incidence of delta.
 
 ## 2.
 
@@ -605,7 +610,7 @@ ONSRtResults <- estimate_R(incid = ONSRtData, method = "parametric_si",
 # creating the plot for the daily data
 RtPlot <- plot(RtResults, what = "R", legend = FALSE) +
   labs(title = expression("a) Time-varying reproduction number" ~ (R[t]) ~ 
-                            "(Daily Data)"),
+                            "(COG-UK data)"),
        x = "Date", y = expression("Reproduction number" ~ (R[t]))) +
   ylim(c(0,2.5))
 # creating the plot for the ONS-CIS data
@@ -623,7 +628,11 @@ grid.arrange(RtPlot, ONSRtPlot, ncol = 2)
 dev.off()
 ```
 
+------------------------------------------------------------------------
+
 ![Fig 8: Comparison of the reproduction number estimate overtime using the Daily COG-UK data (a) and the ONS-CIS Data (b)](Figures/RTPlot.png)
+
+------------------------------------------------------------------------
 
 ```{r displaying values initial values, echo=FALSE}
 ## displaying the initial values
@@ -632,7 +641,7 @@ cat("Daily Data: ", RtResults$R$`Mean(R)`[1], "\n")
 cat("ONS-CIS Data: ", ONSRtResults$R$`Mean(R)`[1], "\n")
 ```
 
-The initial Rt values are quite similar for both data sets, with the COG-UK being 1.644 and the ONS-CIS being 1.9154. Overall the data follows a similar trajectory with it usually being above 1 and having a large dip during August. The Daily data is a lot smoother overall and potentially is missing some of the intricacies of the ONS data.
+The initial Rt values are quite similar for both data sets, with the COG-UK being 1.644 and the ONS-CIS being 1.9154. Overall the data follows a similar trajectory with it usually being above 1 and having a large dip during August. The Daily data is a lot smoother overall and potentially is missing some of the intricacies of the ONS data, however the error bars on the ONS-CIS data are substantially higher suggesting that the data could be less accurate.
 
 ------------------------------------------------------------------------
 
