@@ -29,7 +29,7 @@ source(here("Data", "Functions.R"))
 
 # Introduction
 
-In this document, we take a look at three data-sets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 variants as well as how the data-sets differ from each other. There are four data-sets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from collected Positive PCR tests which have been sequenced to identify the lineage present. *daily-new-confirmed-covid-19-cases.csv* which contains daily case counts for all strains of covid simultaneously, taken from a wider variety of sources and is a more representative data-set of total cases, but doesn't include any other information. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to each other when it comes to the Delta strain. The final data-set comes from the Office for National Statistics Corona-virus Infection Survey (ONS-CIS) [@coronavi]. This data-set like the contains many individual cases of corona-virus and which lineage they are part of. However instead of using positive PCR tests, it uses random samples from various households, and so could also pick up asymptomatic and untested cases.
+In this document, we take a look at three data-sets made about SARS-CoV-2 and use them to investigate the growth rate and reproduction of different SARS-CoV-2 variants as well as compare the differences between data-sets. There are four data-sets that we look at, three of these were from the COVID-19 Genomics UK Consortium (COG-UK) collected by the Sanger Institute [@covid-19]. *Genomes_per_week_in_England.csv* includes weekly counts of various lineages throughout England overtime using data from collected Positive PCR tests which have been sequenced to identify the lineage present. *daily-new-confirmed-covid-19-cases.csv* which contains daily total case counts for all strains of covid collectively, taken from a wider variety of sources and is a more representative data-set of total cases, but doesn't include any other information. *delta-d2.rds* contains an list of individuals who have tested positive in various regions of England and whether or not it has been identified as the Delta strain (B.1.617.2), which is helpful for comparing different regions of the UK to each other when it comes to the Delta strain. The final data-set comes from the Office for National Statistics Corona-virus Infection Survey (ONS-CIS) [@coronavi]. This data-set, like the weekly COG-UK data-set, contains many individual cases of corona-virus and which lineage they are part of. However instead of using positive PCR tests, it uses random samples from various households, and so could also pick up asymptomatic and untested cases.
 
 All of these files are available on an anonymised github, under the "Data" folder [@the-nedstar2025]. This repository also contains all of the figures as .png files and the renv folder for this to be run with the all of the correct packages installed. Inside the "Data" folder also contains the file *Functions.R* which contains all of the self made functions used in this analysis, the entire contents of this file is also present at the end of the document in the Appendix.
 
@@ -38,6 +38,8 @@ Link for anonymised github: <https://github.com/The-Nedstar/SarsCov2-project>
 ------------------------------------------------------------------------
 
 # Question 1
+
+Firstly we look exclusively at the COG-UK *Genomes_per_week_in_England.csv* data-set to investigate the dynamics of each lineage overtime in England.
 
 ## 1.
 
@@ -108,11 +110,13 @@ stacked_area_plot(CogGPW, CogGPW$date, "time", CogGPW$proportion,
 
 This plot shows more clearly the competition between lineages and each one taking over in succession. The dynamic shown is that of cyclic competitive exclusion where new lineages out-compete other lineages to the point where they entirely take over and reach a proportion of \~1. Then, a new lineage evolves with a competitive advantage and the proportion drops back to 0 as this new lineage reaches fixation.
 
+------------------------------------------------------------------------
+
 # Question 2
 
 ## 1.
 
-Here we calculate and display the lineage trajectory for BA.2 using both the COG-UK weekly data-set and the ONS-CIS dataset.
+Here we calculate and display the lineage trajectory for BA.2 using both the COG-UK weekly data-set and the ONS-CIS data-set.
 
 ```{r Loading ONS-CIS Data}
 ## downloading data
@@ -200,7 +204,7 @@ COGPlot2 <- single_lineage_plot(COGBA2c, COGBA2c$date, "time", COGBA2c$count,
                                "a) Cropped Lineage tragectory for BA.2 (COG-UK)")
 # creating a plot with both data-sets shown together
 BothPlot <- multi_lineage_plot(Both, Both$date, "time",Both$count, "normalised Count", 
-                               Both$Data, "data-set", "d) Combined plot", c(0.86, 0.80))
+                               Both$Data, "data-set", "d) Combined plot", c(0.84, 0.80))
 ## combinging and saving plot
 # defining saving parameters
 grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
@@ -208,13 +212,13 @@ grid_plot("BA2LinPlot.png", COGPlot2, COGPlot, ONSPlot, BothPlot)
 
 ------------------------------------------------------------------------
 
-![Fig 3: Comparison of lineage trajectories for the BA.2 lineage from the COG-UK and ONS-CIS data-set. a) COG-UK data cropeed to the same timepoints as the ONS-CIS data. b) all of the COG-UK data. c) all of the ONS-CIS data. d) both data-sets displayed together, the counts from the ONS-CIS data-set has been multiplied by 6.2 for ease of comparison, coloured by data-set.](Figures/BA2LinPlot.png)
+![Fig 3: Comparison of lineage trajectories for the BA.2 lineage from the COG-UK and ONS-CIS data-set. a) COG-UK data cropped to the same time-points as the ONS-CIS data. b) all of the COG-UK data. c) all of the ONS-CIS data. d) both data-sets displayed together, the counts from the ONS-CIS data-set has been multiplied by 6.2 for ease of comparison, coloured by data-set.](Figures/BA2LinPlot.png)
 
 ------------------------------------------------------------------------
 
 ## 2.
 
-Both data-sets show very similar trajectories, with only slight changes between datasets. When the count is increasing, they differ a bit in the middle, but at the starts and ends they are almost identical, starting at about the same time and growing at similar rates overall. They both appear to peak at very similar timesas well, with the ONS plot being only slightly delayed, and hard to guage as the plot is missing its true peak. However, the decrease in count after the peak is particularly different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
+Both data-sets show very similar trajectories, with only slight changes between data-sets. When the count is increasing, they differ a bit in the middle, but at the starts and ends they are almost identical, starting at about the same time and growing at similar rates overall. They both appear to peak at very similar timesas well, with the ONS plot being only slightly delayed, and hard to gauge as the plot is missing its true peak. However, the decrease in count after the peak is particularly different for the ONS-CIS data taking substantially longer and having a more gradual curvature compared to the COG-UK data which has a sudden and more linear drop off.
 
 The most likely cause for this discrepancy is the difference in sampling techniques. COG-UK data was taken from PCR testing, while ONS-CIS used random samples from the population. Many people would test positive for the strain long after it was causing symptoms. On top of this, people were likely to get tested early on into their infection, with a long period afterwards in which it could still be tested. Therefore, random testing of individuals is likely to pick up their infection later into its cycle and lead to the delayed drop that we see. On top of this, as more people had been introduced to the strain it was likely that they had had it before, and could be reintroduced to the virus without infection due to their immune memory of the virus, in this situation they may still test positive for the presence of the virus, but without any symptoms are unlikely to go and get tested.
 
@@ -222,7 +226,7 @@ The most likely cause for this discrepancy is the difference in sampling techniq
 
 # Question 3
 
-In this section we use the COG-UK weekly dataset to compare the fixation rates and selective advantage of 3 covid lineages; Delta (B.1.617.2), BA.1 and BA.2; using logistic growth models.
+In this section we use the COG-UK weekly data-set to compare the fixation rates and selective advantage of 3 covid lineages; Delta (B.1.617.2), BA.1 and BA.2; using logistic growth models.
 
 ```{r Data wrangling for logistic growth models}
 ## filtering by lineage and dates
@@ -381,7 +385,7 @@ DeltaD2Freq <- DeltaD2 %>%
 ## plotting delta frequencies using a self made plot
 DeltaByReg <- multi_lineage_plot(DeltaD2Freq, DeltaD2Freq$date, "time", DeltaD2Freq$frequency,
                                  "Frequency", DeltaD2Freq$phecname, "region", 
-                                 "Delta Frequency per region", c(0.8835,0.325))
+                                 "Delta Frequency per region", c(0.8845,0.325))
 # saving to png seperately
 png(filename = here("Figures", "DeltaByReg.png"), height = 13, width = 24, 
     units = "cm", res = 400)
@@ -559,7 +563,7 @@ DailyPlot <- single_lineage_plot(DailyCases, DailyCases$date, "time", DailyCases
                                  "count", "c) daily cases data")
 # creating a plot with both data-sets shown together
 DVWPlot <- multi_lineage_plot(DayVWeek, DayVWeek$date, "time",DayVWeek$count, "normalised Count", 
-                               DayVWeek$Data, "data-set", "d) Combined plot", c(0.80, 0.80))
+                               DayVWeek$Data, "data-set", "d) Combined plot", c(0.23, 0.79))
 
 ## combinging and saving plot
 # defining saving parameters
@@ -630,7 +634,7 @@ dev.off()
 
 ------------------------------------------------------------------------
 
-![Fig 8: Comparison of the reproduction number estimate overtime using the Daily COG-UK data (a) and the ONS-CIS Data (b)](Figures/RTPlot.png)
+![Fig 8: Comparison of the reproduction number estimate overtime using the Daily COG-UK data (a) and the ONS-CIS Data (b).](Figures/RTPlot.png)
 
 ------------------------------------------------------------------------
 
